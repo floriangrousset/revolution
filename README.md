@@ -62,33 +62,33 @@ Want to see what a full negotiation looks like? Check out this example session:
 
 | Role | 👤 Name | 🏷️ Title | 🎯 Specialty |
 |------|---------|----------|--------------|
-| 🎖️ Party Head | Senator Mitchell Crawford | Senate Majority Leader | Overall Strategy |
-| 🎓 Advisor | Dr. Harrison Wells | Chief Economic Advisor | Tax/Fiscal Policy |
-| 🎓 Advisor | General (Ret.) Robert "Iron" Steele | Defense Policy Advisor | National Security |
-| 🎓 Advisor | Pastor David Whitfield | Social Policy Advisor | Traditional Values |
-| 🎓 Advisor | Judge Victoria Harrington | Legal Counsel | Constitutional Law |
-| 📊 Assistant | Margaret "Maggie" Chen | Budget Analyst | Fiscal Analysis |
-| 📊 Assistant | Marcus Reilly | Trade Specialist | International Trade |
-| 📊 Assistant | Jake "Roughneck" Patterson | Energy Policy Analyst | Energy Independence |
-| 📊 Assistant | Dr. Sarah Mitchell | Healthcare Analyst | Healthcare Policy |
-| 📊 Assistant | Sheriff Ricardo Mendez | Immigration Specialist | Border Policy |
-| 📊 Assistant | Dr. Thomas Blackwell | Research Director | Data & Statistics |
+| 🎖️ Party Head | Mike Johnson | Speaker of the House | Legislative Strategy |
+| 🎓 Advisor | John Thune | Senate Majority Leader | Tax/Fiscal Policy |
+| 🎓 Advisor | Tom Cotton | Senator from Arkansas | National Security |
+| 🎓 Advisor | Josh Hawley | Senator from Missouri | Cultural Conservatism |
+| 🎓 Advisor | Ted Cruz | Senator from Texas | Constitutional Law |
+| 📊 Assistant | Steve Scalise | House Majority Leader | Federal Budget |
+| 📊 Assistant | Marco Rubio | Secretary of State | International Trade |
+| 📊 Assistant | John Barrasso | Senate Majority Whip | Energy Policy |
+| 📊 Assistant | Rand Paul | Senator from Kentucky | Healthcare Policy |
+| 📊 Assistant | JD Vance | Vice President | Immigration Policy |
+| 📊 Assistant | Lindsey Graham | Senator from South Carolina | Policy Strategy |
 
 ### 🔵 Democrat Party (11 agents)
 
 | Role | 👤 Name | 🏷️ Title | 🎯 Specialty |
 |------|---------|----------|--------------|
-| 🎖️ Party Head | Rep. Angela Washington | Speaker of the House | Coalition Building |
-| 🎓 Advisor | Dr. Janet Ramirez | Chief Economic Advisor | Labor/Progressive Tax |
-| 🎓 Advisor | Dr. Michael Green | Climate Policy Advisor | Environment |
-| 🎓 Advisor | Maya Jefferson | Social Justice Advisor | Civil Rights |
-| 🎓 Advisor | Prof. Eleanor Goldstein | Legal Counsel | Constitutional Law |
-| 📊 Assistant | Derek Washington | Budget Analyst | Progressive Revenue |
-| 📊 Assistant | Maria Santos | Labor Relations Specialist | Workers' Rights |
-| 📊 Assistant | Dr. Patricia Chen | Healthcare Policy Analyst | Universal Healthcare |
-| 📊 Assistant | Principal James Wright | Education Specialist | Public Education |
-| 📊 Assistant | Sofia Herrera | Immigration Specialist | Immigration Reform |
-| 📊 Assistant | Dr. Anthony Liu | Research Director | Policy Research |
+| 🎖️ Party Head | Chuck Schumer | Senate Minority Leader | Caucus Strategy |
+| 🎓 Advisor | Elizabeth Warren | Senator from Massachusetts | Financial Regulation |
+| 🎓 Advisor | Alexandria Ocasio-Cortez | Representative from New York | Climate Action |
+| 🎓 Advisor | Cory Booker | Senator from New Jersey | Criminal Justice/Civil Rights |
+| 🎓 Advisor | Jamie Raskin | Representative from Maryland | Constitutional Law |
+| 📊 Assistant | Hakeem Jeffries | House Minority Leader | Budget Strategy |
+| 📊 Assistant | Bernie Sanders | Senator from Vermont | Labor/Inequality |
+| 📊 Assistant | Patty Murray | Senator from Washington | Healthcare Policy |
+| 📊 Assistant | Katherine Clark | House Minority Whip | Education Policy |
+| 📊 Assistant | Ilhan Omar | Representative from Minnesota | Immigration/Refugees |
+| 📊 Assistant | Amy Klobuchar | Senator from Minnesota | Antitrust/Tech Policy |
 
 ## 🚀 Quick Start
 
