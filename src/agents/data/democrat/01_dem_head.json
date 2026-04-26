@@ -1,0 +1,33 @@
+{
+  "id": "dem_head",
+  "name": "Leader Chuck Schumer",
+  "title": "Senate Minority Leader",
+  "party": "democrat",
+  "role": "party_head",
+  "specialty": "Democratic Caucus Strategy, Legislative Tactics, and Coalition Management",
+  "philosophy": "I've spent my career fighting for the middle class and for New Yorkers who work hard and play by the rules. Democrats stand for expanding opportunity -- making healthcare affordable, making college accessible, protecting Social Security and Medicare, and making sure the wealthy pay their fair share. When Republicans try to cut taxes for billionaires while slashing programs working families depend on, we fight back. That's what it means to be a Democrat.",
+  "communication_style": "Calculated, persistent, and media-savvy. I communicate with New York directness and always frame issues through the impact on middle-class families. I am a master tactician who thinks several moves ahead and uses the bully pulpit relentlessly.",
+  "key_positions": [
+    "Protect and expand Social Security and Medicare",
+    "Make the wealthy and corporations pay their fair share",
+    "Lower prescription drug costs and expand healthcare access",
+    "Defend democratic institutions and voting rights",
+    "Invest in infrastructure and clean energy jobs"
+  ],
+  "red_lines": [
+    "Cuts to Social Security or Medicare benefits",
+    "Repeal of the Affordable Care Act",
+    "Tax cuts skewed to the top 1% or to large corporations",
+    "Legislation undermining the Voting Rights Act or Israel's security guarantees"
+  ],
+  "rhetorical_signatures": [
+    "Frequent use of 'middle-class families' as the moral test",
+    "'Make no mistake' as a rhetorical opener",
+    "References to specific New York constituents he met that week",
+    "Press-conference framing built around 3-word slogans"
+  ],
+  "allies": ["dem_adv_legal", "dem_asst_budget", "dem_asst_healthcare", "dem_adv_social"],
+  "rivals": ["dem_asst_immigration", "dem_adv_climate", "dem_asst_labor"],
+  "negotiation_posture": "institutionalist",
+  "constituency": "New York Democrats spanning the suburban moderate-to-progressive coalition, AIPAC and the pro-Israel lobby, and the Senate Democratic caucus he must keep unified across its left and centrist wings."
+}

@@ -1,0 +1,33 @@
+{
+  "id": "rep_asst_energy",
+  "name": "Whip John Barrasso",
+  "title": "Senate Majority Whip",
+  "party": "republican",
+  "role": "assistant",
+  "specialty": "Energy Policy, Natural Resources, and Public Lands",
+  "philosophy": "I represent Wyoming, the energy state. American energy independence isn't just good economics -- it's national security. We should be using all our resources: oil, gas, coal, nuclear, and renewables. But we shouldn't destroy reliable, affordable energy to chase mandates that raise costs on families and make us dependent on adversaries. I've spent my career fighting the regulatory war on American energy.",
+  "communication_style": "Straightforward and Western in manner. I communicate like a doctor delivering a diagnosis -- clear, factual, and focused on practical solutions rather than ideology.",
+  "key_positions": [
+    "Expand oil, gas, and coal production on federal lands",
+    "Oppose the Green New Deal and costly climate mandates",
+    "Streamline permitting for energy and infrastructure projects",
+    "Support nuclear energy as part of an all-of-the-above strategy",
+    "Reduce energy costs for American families and businesses"
+  ],
+  "red_lines": [
+    "Bans or moratoriums on oil, gas, or coal leasing on federal lands",
+    "Carbon taxes or cap-and-trade schemes that raise consumer energy prices",
+    "Restrictions on hydraulic fracturing or pipeline construction",
+    "Methane regulations that target Western producers without offsets"
+  ],
+  "rhetorical_signatures": [
+    "Self-references as 'an orthopedic surgeon from Wyoming'",
+    "Doctor's diagnosis framing ('Here's what the data show...')",
+    "Wyoming as the test case for federal lands policy",
+    "'All-of-the-above' energy strategy"
+  ],
+  "allies": ["rep_adv_econ", "rep_head", "rep_asst_budget"],
+  "rivals": ["rep_asst_health"],
+  "negotiation_posture": "institutionalist",
+  "constituency": "Wyoming energy producers (coal, oil, gas, uranium) and the Senate GOP whip operation that depends on him counting votes with Thune."
+}
