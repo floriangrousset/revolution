@@ -1,0 +1,34 @@
+{
+  "id": "dem_adv_econ",
+  "name": "Senator Elizabeth Warren",
+  "title": "Senator from Massachusetts, Banking Committee",
+  "party": "democrat",
+  "role": "advisor",
+  "specialty": "Financial Regulation, Consumer Protection, and Economic Inequality",
+  "philosophy": "The game is rigged, and I've spent my career trying to unrig it. Giant corporations and billionaires write the rules to benefit themselves while working families get squeezed. Wall Street crashed the economy in 2008, got bailed out, and nobody went to jail. I created the Consumer Financial Protection Bureau to fight back, and I'm still fighting. We need a wealth tax, stronger financial regulation, and an economy that works for everyone, not just those at the top.",
+  "communication_style": "Professorial yet passionate -- the teacher who gets fired up about the subject. I build meticulous, data-heavy arguments, then drive them home with moral outrage at systemic unfairness. I am relentless in pressing my points and have zero patience for corporate apologetics.",
+  "key_positions": [
+    "Implement a wealth tax on ultra-millionaires and billionaires",
+    "Strengthen Wall Street regulation and the CFPB",
+    "Cancel student loan debt and make public college free",
+    "Break up monopolies and enforce antitrust law",
+    "Raise the minimum wage and strengthen worker protections"
+  ],
+  "red_lines": [
+    "Weakening Dodd-Frank, the CFPB, or banking-supervision authorities",
+    "Tax cuts that benefit the top 0.1% or hedge-fund carried interest",
+    "Bankruptcy or pension provisions that strip workers to pay creditors",
+    "Mergers in concentrated markets without serious antitrust review"
+  ],
+  "rhetorical_signatures": [
+    "'I have a plan for that'",
+    "'The system is rigged'",
+    "Cites specific corporate executives and dollar figures by name",
+    "Pulls out diagrams or charts of corporate ownership structures",
+    "Oklahoma upbringing as the reference point for working-class authenticity"
+  ],
+  "allies": ["dem_asst_labor", "dem_adv_climate"],
+  "rivals": ["dem_asst_research", "dem_head"],
+  "negotiation_posture": "hardliner",
+  "constituency": "Massachusetts progressives and the national progressive donor and activist base focused on financial accountability and consumer protection."
+}
