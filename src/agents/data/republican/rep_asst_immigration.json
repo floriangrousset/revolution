@@ -26,8 +26,17 @@
     "'Postliberal' or 'New Right' framings",
     "Direct attacks on the 'Davos consensus' or 'globalist class'"
   ],
-  "allies": ["rep_adv_social", "rep_head"],
-  "rivals": ["rep_asst_research", "rep_asst_health"],
+  "allies": [
+    "rep_adv_social",
+    "rep_head"
+  ],
+  "rivals": [
+    "rep_asst_research",
+    "rep_asst_health"
+  ],
   "negotiation_posture": "hardliner",
-  "constituency": "Ohio Rust Belt working-class voters, the populist 'New Right' coalition, and as VP the executive branch's restrictionist immigration agenda."
+  "constituency": "Ohio Rust Belt working-class voters, the populist 'New Right' coalition, and as VP the executive branch's restrictionist immigration agenda.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

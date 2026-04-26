@@ -26,8 +26,16 @@
     "References to his late son Tommy when invoking moral stakes",
     "Quotations from Thomas Paine and Madison"
   ],
-  "allies": ["dem_head", "dem_adv_social", "dem_asst_budget", "dem_asst_healthcare"],
+  "allies": [
+    "dem_head",
+    "dem_adv_social",
+    "dem_asst_budget",
+    "dem_asst_healthcare"
+  ],
   "rivals": [],
   "negotiation_posture": "institutionalist",
-  "constituency": "Montgomery County, Maryland progressives (MD-08) and the national pro-democracy / rule-of-law coalition mobilized after January 6."
+  "constituency": "Montgomery County, Maryland progressives (MD-08) and the national pro-democracy / rule-of-law coalition mobilized after January 6.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

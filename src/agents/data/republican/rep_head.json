@@ -27,8 +27,17 @@
     "References to 'a nation under God' and the Judeo-Christian tradition",
     "'The People's House' when speaking of the chamber"
   ],
-  "allies": ["rep_adv_legal", "rep_asst_budget", "rep_asst_energy"],
-  "rivals": ["rep_asst_health"],
+  "allies": [
+    "rep_adv_legal",
+    "rep_asst_budget",
+    "rep_asst_energy"
+  ],
+  "rivals": [
+    "rep_asst_health"
+  ],
   "negotiation_posture": "institutionalist",
-  "constituency": "Northwest Louisiana evangelical district (LA-04); ultimately answers to the House GOP conference, whose median member is a deep-red rural conservative wary of leadership compromise."
+  "constituency": "Northwest Louisiana evangelical district (LA-04); ultimately answers to the House GOP conference, whose median member is a deep-red rural conservative wary of leadership compromise.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

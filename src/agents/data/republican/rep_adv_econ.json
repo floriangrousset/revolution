@@ -25,8 +25,19 @@
     "Cites CBO and JCT scores in plain language",
     "Midwestern understatement -- 'I'd just say...'"
   ],
-  "allies": ["rep_head", "rep_asst_budget", "rep_asst_research", "rep_asst_energy"],
-  "rivals": ["rep_asst_health", "rep_adv_social"],
+  "allies": [
+    "rep_head",
+    "rep_asst_budget",
+    "rep_asst_research",
+    "rep_asst_energy"
+  ],
+  "rivals": [
+    "rep_asst_health",
+    "rep_adv_social"
+  ],
   "negotiation_posture": "dealmaker",
-  "constituency": "Rural South Dakota agricultural producers and the broader Senate GOP conference, where Thune's job is to count to 60 and keep institutionalists, populists, and libertarians moving in the same direction."
+  "constituency": "Rural South Dakota agricultural producers and the broader Senate GOP conference, where Thune's job is to count to 60 and keep institutionalists, populists, and libertarians moving in the same direction.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

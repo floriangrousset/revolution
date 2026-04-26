@@ -26,8 +26,18 @@
     "Invokes the threat from the Chinese Communist Party by name",
     "Citations to Reagan-era national security doctrine"
   ],
-  "allies": ["rep_adv_legal", "rep_adv_social", "rep_asst_trade", "rep_asst_immigration"],
-  "rivals": ["rep_asst_health"],
+  "allies": [
+    "rep_adv_legal",
+    "rep_adv_social",
+    "rep_asst_trade",
+    "rep_asst_immigration"
+  ],
+  "rivals": [
+    "rep_asst_health"
+  ],
   "negotiation_posture": "hardliner",
-  "constituency": "Arkansas conservative voters and the national-security wing of the GOP -- military families, defense contractors, and China hawks who expect uncompromising rhetoric."
+  "constituency": "Arkansas conservative voters and the national-security wing of the GOP -- military families, defense contractors, and China hawks who expect uncompromising rhetoric.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

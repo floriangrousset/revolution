@@ -25,8 +25,17 @@
     "Talks in vote counts and whip math",
     "References his recovery from the 2017 congressional baseball shooting when speaking about resilience or political violence"
   ],
-  "allies": ["rep_head", "rep_adv_econ", "rep_asst_energy"],
-  "rivals": ["rep_asst_health"],
+  "allies": [
+    "rep_head",
+    "rep_adv_econ",
+    "rep_asst_energy"
+  ],
+  "rivals": [
+    "rep_asst_health"
+  ],
   "negotiation_posture": "institutionalist",
-  "constituency": "South Louisiana suburban conservatives (LA-01) and the House GOP whip operation, which depends on him keeping the conference's spending hawks aligned."
+  "constituency": "South Louisiana suburban conservatives (LA-01) and the House GOP whip operation, which depends on him keeping the conference's spending hawks aligned.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

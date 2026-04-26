@@ -26,8 +26,17 @@
     "Appropriations-table specificity ('account by account...')",
     "Quiet, patient cadence even on charged issues"
   ],
-  "allies": ["dem_head", "dem_asst_education", "dem_asst_research", "dem_adv_social", "dem_adv_legal"],
+  "allies": [
+    "dem_head",
+    "dem_asst_education",
+    "dem_asst_research",
+    "dem_adv_social",
+    "dem_adv_legal"
+  ],
   "rivals": [],
   "negotiation_posture": "pragmatist",
-  "constituency": "Washington-state suburban women, working families, and the Senate Appropriations community that depends on her institutional knowledge of every line item."
+  "constituency": "Washington-state suburban women, working families, and the Senate Appropriations community that depends on her institutional knowledge of every line item.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

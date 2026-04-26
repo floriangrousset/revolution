@@ -7,6 +7,7 @@ import pytest
 
 from src.agents.base import (
     Agent,
+    Source,
     clear_registry,
     load_agents,
     register_agents,
@@ -210,3 +211,119 @@ class TestRegistry:
         agent = _make_agent(id="lonely", allies=["anything"])
         # With an empty registry, the resolver returns the raw id.
         assert agent._format_relationships().endswith("anything")
+
+
+class TestPersonaEnrichmentFields:
+    def test_defaults_are_empty(self):
+        agent = _make_agent()
+        assert agent.personality_assessment == ""
+        assert agent.sources == []
+        assert agent.persona_last_updated == ""
+
+    def test_sources_coerced_from_dict_in_post_init(self):
+        agent = _make_agent(sources=[
+            {"title": "Op-ed", "url": "https://example.com/a",
+             "date": "2025-01-15", "source_type": "op-ed"},
+        ])
+        assert len(agent.sources) == 1
+        assert isinstance(agent.sources[0], Source)
+        assert agent.sources[0].title == "Op-ed"
+
+    def test_sources_passthrough_when_already_dataclass(self):
+        src = Source(title="Speech", url="https://example.com/b",
+                     date="2025-02-01", source_type="speech")
+        agent = _make_agent(sources=[src])
+        assert agent.sources[0] is src
+
+    def test_from_json_round_trips_enrichment_fields(self, tmp_path: Path):
+        data = {
+            "id": "enriched", "name": "E", "title": "T",
+            "party": "democrat", "role": "advisor", "specialty": "S",
+            "philosophy": "P", "communication_style": "C",
+            "personality_assessment": "Detail-oriented and patient.",
+            "sources": [
+                {"title": "Floor Speech", "url": "https://example.com/s1",
+                 "date": "2025-03-10", "source_type": "speech",
+                 "description": "Stated red line on X."}
+            ],
+            "persona_last_updated": "2025-03-15",
+        }
+        path = tmp_path / "e.json"
+        path.write_text(json.dumps(data))
+        agent = Agent.from_json(path)
+        assert agent.personality_assessment == "Detail-oriented and patient."
+        assert agent.persona_last_updated == "2025-03-15"
+        assert isinstance(agent.sources[0], Source)
+        assert agent.sources[0].url == "https://example.com/s1"
+
+    def test_prompt_renders_personality_and_sources_when_populated(self):
+        agent = _make_agent(
+            personality_assessment="Pragmatic, deal-oriented, low ego.",
+            sources=[Source(
+                title="2024 Senate Floor Speech",
+                url="https://example.com/floor",
+                date="2024-09-12",
+                source_type="speech",
+                description="Articulated red lines on entitlement reform.",
+            )],
+        )
+        prompt = agent.get_system_prompt("Test proposal.")
+        assert "## Personality Assessment" in prompt
+        assert "Pragmatic, deal-oriented, low ego." in prompt
+        assert "## Primary Sources Backing This Persona" in prompt
+        assert "2024 Senate Floor Speech" in prompt
+        assert "https://example.com/floor" in prompt
+
+    def test_prompt_renders_placeholders_when_empty(self):
+        agent = _make_agent()
+        prompt = agent.get_system_prompt("Test proposal.")
+        assert "## Personality Assessment" in prompt
+        assert "Not yet researched." in prompt
+        assert "## Primary Sources Backing This Persona" in prompt
+        assert "None cited yet." in prompt
+
+    def test_sources_null_raises_clear_error(self):
+        with pytest.raises(ValueError, match="sources must be a list"):
+            _make_agent(sources=None)
+
+    def test_sources_non_list_raises_clear_error(self):
+        with pytest.raises(ValueError, match="sources must be a list"):
+            _make_agent(sources={"title": "x"})
+
+    def test_sources_non_dict_item_raises_with_index(self):
+        with pytest.raises(ValueError, match=r"sources\[0\] must be a dict or Source"):
+            _make_agent(sources=["just a string"])
+
+    def test_sources_malformed_dict_raises_with_index_and_agent_id(self):
+        with pytest.raises(ValueError, match=r"Agent 'test_agent': sources\[1\] is invalid"):
+            _make_agent(sources=[
+                {"title": "ok", "url": "u", "date": "d", "source_type": "t"},
+                {"title": "missing rest"},
+            ])
+
+    def test_from_json_malformed_source_includes_path_and_index(self, tmp_path: Path):
+        path = tmp_path / "bad_src.json"
+        path.write_text(json.dumps({
+            "id": "x", "name": "X", "title": "T",
+            "party": "republican", "role": "advisor",
+            "specialty": "S", "philosophy": "P", "communication_style": "C",
+            "sources": [{"title": "incomplete"}],
+        }))
+        with pytest.raises(ValueError) as exc_info:
+            Agent.from_json(path)
+        msg = str(exc_info.value)
+        assert str(path) in msg
+        assert "sources[0]" in msg
+
+    def test_production_json_files_declare_enrichment_keys(self):
+        """Every shipped persona should declare the enrichment keys (even if empty)
+        so the JSON 'schema' is consistent across the roster."""
+        roots = [
+            Path("src/agents/data/republican"),
+            Path("src/agents/data/democrat"),
+        ]
+        for root in roots:
+            for p in sorted(root.glob("*.json")):
+                data = json.loads(p.read_text())
+                for key in ("personality_assessment", "sources", "persona_last_updated"):
+                    assert key in data, f"{p} is missing key {key!r}"
