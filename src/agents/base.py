@@ -4,6 +4,16 @@ from typing import Literal, Optional
 
 
 @dataclass
+class Source:
+    """A primary-source citation backing a persona's personality assessment."""
+    title: str
+    url: str
+    date: str
+    source_type: str
+    description: str = ""
+
+
+@dataclass
 class Agent:
     """A political agent with a defined persona."""
     id: str
@@ -15,6 +25,9 @@ class Agent:
     philosophy: str
     communication_style: str
     key_positions: list[str] = field(default_factory=list)
+    personality_assessment: str = ""
+    sources: list[Source] = field(default_factory=list)
+    persona_last_updated: str = ""
 
     def get_system_prompt(self, proposal_description: str, party_position: Optional[str] = None) -> str:
         """Generate the system prompt for this agent."""
