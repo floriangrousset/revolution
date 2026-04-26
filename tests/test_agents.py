@@ -282,6 +282,39 @@ class TestPersonaEnrichmentFields:
         assert "## Primary Sources Backing This Persona" in prompt
         assert "None cited yet." in prompt
 
+    def test_sources_null_raises_clear_error(self):
+        with pytest.raises(ValueError, match="sources must be a list"):
+            _make_agent(sources=None)
+
+    def test_sources_non_list_raises_clear_error(self):
+        with pytest.raises(ValueError, match="sources must be a list"):
+            _make_agent(sources={"title": "x"})
+
+    def test_sources_non_dict_item_raises_with_index(self):
+        with pytest.raises(ValueError, match=r"sources\[0\] must be a dict or Source"):
+            _make_agent(sources=["just a string"])
+
+    def test_sources_malformed_dict_raises_with_index_and_agent_id(self):
+        with pytest.raises(ValueError, match=r"Agent 'test_agent': sources\[1\] is invalid"):
+            _make_agent(sources=[
+                {"title": "ok", "url": "u", "date": "d", "source_type": "t"},
+                {"title": "missing rest"},
+            ])
+
+    def test_from_json_malformed_source_includes_path_and_index(self, tmp_path: Path):
+        path = tmp_path / "bad_src.json"
+        path.write_text(json.dumps({
+            "id": "x", "name": "X", "title": "T",
+            "party": "republican", "role": "advisor",
+            "specialty": "S", "philosophy": "P", "communication_style": "C",
+            "sources": [{"title": "incomplete"}],
+        }))
+        with pytest.raises(ValueError) as exc_info:
+            Agent.from_json(path)
+        msg = str(exc_info.value)
+        assert str(path) in msg
+        assert "sources[0]" in msg
+
     def test_production_json_files_declare_enrichment_keys(self):
         """Every shipped persona should declare the enrichment keys (even if empty)
         so the JSON 'schema' is consistent across the roster."""

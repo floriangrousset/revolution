@@ -87,10 +87,27 @@ class Agent:
                 f"Agent '{self.id}': invalid negotiation_posture {self.negotiation_posture!r}; "
                 f"expected one of {list(get_args(NegotiationPosture))}"
             )
-        self.sources = [
-            s if isinstance(s, Source) else Source(**s)
-            for s in self.sources
-        ]
+        if not isinstance(self.sources, list):
+            raise ValueError(
+                f"Agent '{self.id}': sources must be a list, got {type(self.sources).__name__}"
+            )
+        coerced: list[Source] = []
+        for index, s in enumerate(self.sources):
+            if isinstance(s, Source):
+                coerced.append(s)
+                continue
+            if not isinstance(s, dict):
+                raise ValueError(
+                    f"Agent '{self.id}': sources[{index}] must be a dict or Source, "
+                    f"got {type(s).__name__}"
+                )
+            try:
+                coerced.append(Source(**s))
+            except TypeError as e:
+                raise ValueError(
+                    f"Agent '{self.id}': sources[{index}] is invalid: {e}"
+                ) from e
+        self.sources = coerced
 
     @classmethod
     def from_json(cls, path: Path) -> "Agent":
