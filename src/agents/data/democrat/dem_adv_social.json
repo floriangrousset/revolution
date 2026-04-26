@@ -27,7 +27,7 @@
     "Hopeful, sermonic cadence rather than confrontation"
   ],
   "allies": ["dem_head", "dem_adv_legal", "dem_asst_healthcare", "dem_asst_education"],
-  "rivals": ["dem_asst_labor"],
+  "rivals": [],
   "negotiation_posture": "dealmaker",
   "constituency": "New Jersey urban and suburban Democrats, civil rights organizations, and the criminal-justice-reform coalition that bridges left and libertarian right."
 }

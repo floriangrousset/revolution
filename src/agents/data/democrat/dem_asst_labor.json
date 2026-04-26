@@ -28,7 +28,7 @@
     "'Not me, us'"
   ],
   "allies": ["dem_adv_econ", "dem_adv_climate", "dem_asst_immigration"],
-  "rivals": ["dem_head", "dem_asst_research", "dem_adv_social"],
+  "rivals": ["dem_head", "dem_asst_research"],
   "negotiation_posture": "bomb_thrower",
   "constituency": "Vermont's working-class progressive base and the national democratic-socialist movement of small-donor activists who fund his campaigns."
 }

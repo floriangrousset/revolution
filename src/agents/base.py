@@ -2,7 +2,7 @@
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Literal, Optional, get_args
 
 NegotiationPosture = Literal[
     "dealmaker",
@@ -11,6 +11,24 @@ NegotiationPosture = Literal[
     "bomb_thrower",
     "institutionalist",
 ]
+Party = Literal["republican", "democrat"]
+Role = Literal["party_head", "advisor", "assistant"]
+
+_AGENT_REGISTRY: dict[str, "Agent"] = {}
+
+
+def register_agents(agents: list["Agent"]) -> None:
+    """Register agents so allies/rivals can be resolved to names in prompts."""
+    for agent in agents:
+        _AGENT_REGISTRY[agent.id] = agent
+
+
+def _resolve_id(agent_id: str) -> str:
+    """Return 'Name (title)' for a registered ID, else the raw ID."""
+    other = _AGENT_REGISTRY.get(agent_id)
+    if other is None:
+        return agent_id
+    return f"{other.name} ({other.title})"
 
 
 @dataclass
@@ -19,8 +37,8 @@ class Agent:
     id: str
     name: str
     title: str
-    party: Literal["republican", "democrat"]
-    role: Literal["party_head", "advisor", "assistant"]
+    party: Party
+    role: Role
     specialty: str
     philosophy: str
     communication_style: str
@@ -31,6 +49,17 @@ class Agent:
     rivals: list[str] = field(default_factory=list)
     negotiation_posture: NegotiationPosture = "pragmatist"
     constituency: str = ""
+
+    def __post_init__(self) -> None:
+        if self.party not in get_args(Party):
+            raise ValueError(f"Agent '{self.id}': invalid party {self.party!r}")
+        if self.role not in get_args(Role):
+            raise ValueError(f"Agent '{self.id}': invalid role {self.role!r}")
+        if self.negotiation_posture not in get_args(NegotiationPosture):
+            raise ValueError(
+                f"Agent '{self.id}': invalid negotiation_posture {self.negotiation_posture!r}; "
+                f"expected one of {list(get_args(NegotiationPosture))}"
+            )
 
     @classmethod
     def from_json(cls, path: Path) -> "Agent":
@@ -61,7 +90,6 @@ class Agent:
         return AGENT_SYSTEM_PROMPT.format(
             agent_name=self.name,
             agent_title=self.title,
-            agent_id=self.id,
             party=self.party.capitalize(),
             role_description=self._get_role_description(),
             negotiation_posture=self._get_posture_description(),
@@ -104,34 +132,36 @@ class Agent:
         """Get a one-line description of the agent's negotiation posture."""
         descriptions = {
             "dealmaker": (
-                "Dealmaker: you actively seek cross-aisle compromise and propose concrete amendments "
+                "You actively seek cross-aisle compromise and propose concrete amendments "
                 "to bring opponents on board."
             ),
             "hardliner": (
-                "Hardliner: you defend your stated positions firmly and rarely concede ground; "
+                "You defend your stated positions firmly and rarely concede ground; "
                 "compromise must come to you, not the other way around."
             ),
             "pragmatist": (
-                "Pragmatist: you weigh trade-offs and accept incremental wins where they advance your goals."
+                "You weigh trade-offs and accept incremental wins where they advance your goals."
             ),
             "bomb_thrower": (
-                "Bomb-thrower: you reject the framing of bad proposals outright, prefer scorched-earth "
+                "You reject the framing of bad proposals outright, prefer scorched-earth "
                 "rhetoric, and are willing to break with your own party's leadership."
             ),
             "institutionalist": (
-                "Institutionalist: you respect process, party discipline, and the dignity of the chamber; "
+                "You respect process, party discipline, and the dignity of the chamber; "
                 "you build consensus through procedure rather than confrontation."
             ),
         }
-        return descriptions.get(self.negotiation_posture, descriptions["pragmatist"])
+        return descriptions[self.negotiation_posture]
 
     def _format_relationships(self) -> str:
-        """Format allies and rivals into a readable block."""
+        """Format allies and rivals into a readable block, resolving IDs to names."""
         parts = []
         if self.allies:
-            parts.append("Allies (figures in this room you tend to align with): " + ", ".join(self.allies))
+            resolved = [_resolve_id(aid) for aid in self.allies]
+            parts.append("Allies (figures in this room you tend to align with): " + "; ".join(resolved))
         if self.rivals:
-            parts.append("Rivals (figures in this room you frequently clash with): " + ", ".join(self.rivals))
+            resolved = [_resolve_id(rid) for rid in self.rivals]
+            parts.append("Rivals (figures in this room you frequently clash with): " + "; ".join(resolved))
         if not parts:
             return "No notable in-room alignments."
         return "\n".join(parts)
@@ -151,24 +181,40 @@ class Agent:
 
 
 def load_agents(directory: Path) -> list[Agent]:
-    """Load every JSON agent file from the given directory, sorted by filename."""
+    """Load every JSON agent file from the given directory, sorted by agent id."""
     directory = Path(directory)
     if not directory.is_dir():
         raise FileNotFoundError(f"Agent data directory not found: {directory}")
-    agents = [Agent.from_json(path) for path in sorted(directory.glob("*.json"))]
+    agents = [Agent.from_json(path) for path in directory.glob("*.json")]
     if not agents:
         raise ValueError(f"No agent JSON files found in {directory}")
+    agents.sort(key=lambda a: a.id)
     return agents
 
 
 def validate_relationships(agents: list[Agent]) -> None:
-    """Raise ValueError if any allies/rivals reference IDs not present in the agent list."""
-    known_ids = {agent.id for agent in agents}
+    """Validate ally/rival references on the given agents.
+
+    Catches: unknown IDs, self-references, and cross-party references
+    (allies/rivals must be in the same party as the agent listing them).
+    """
+    by_id = {agent.id: agent for agent in agents}
     for agent in agents:
-        unknown_allies = [aid for aid in agent.allies if aid not in known_ids]
-        unknown_rivals = [rid for rid in agent.rivals if rid not in known_ids]
+        unknown_allies = [aid for aid in agent.allies if aid not in by_id]
+        unknown_rivals = [rid for rid in agent.rivals if rid not in by_id]
         if unknown_allies or unknown_rivals:
             raise ValueError(
                 f"Agent '{agent.id}' references unknown ids -- "
                 f"allies: {unknown_allies}, rivals: {unknown_rivals}"
+            )
+        if agent.id in agent.allies or agent.id in agent.rivals:
+            raise ValueError(f"Agent '{agent.id}' lists itself as an ally or rival")
+        wrong_party = [
+            other_id for other_id in agent.allies + agent.rivals
+            if by_id[other_id].party != agent.party
+        ]
+        if wrong_party:
+            raise ValueError(
+                f"Agent '{agent.id}' (party={agent.party}) references cross-party "
+                f"allies/rivals: {wrong_party}"
             )
