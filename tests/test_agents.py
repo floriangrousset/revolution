@@ -1,11 +1,13 @@
 """Tests for the Agent dataclass, JSON loading, validation, and prompt rendering."""
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 import pytest
 
 from src.agents.base import (
     Agent,
+    clear_registry,
     load_agents,
     register_agents,
     validate_relationships,
@@ -107,10 +109,30 @@ class TestFromJson:
     def test_load_agents_sorts_by_id(self, tmp_path: Path):
         for agent_id in ("zeta", "alpha", "mu"):
             (tmp_path / f"x_{agent_id}.json").write_text(
-                json.dumps(_make_agent(id=agent_id).__dict__)
+                json.dumps(asdict(_make_agent(id=agent_id)))
             )
         loaded = load_agents(tmp_path)
         assert [a.id for a in loaded] == ["alpha", "mu", "zeta"]
+
+    def test_from_json_error_includes_file_path(self, tmp_path: Path):
+        path = tmp_path / "broken.json"
+        path.write_text(json.dumps({"id": "x", "name": "X", "title": "T",
+                                    "party": "republican", "role": "advisor",
+                                    "specialty": "S", "philosophy": "P",
+                                    "communication_style": "C",
+                                    "negotiation_posture": "wrongposture"}))
+        with pytest.raises(ValueError, match=str(path)):
+            Agent.from_json(path)
+
+    def test_from_json_unknown_field_includes_path(self, tmp_path: Path):
+        path = tmp_path / "typo.json"
+        path.write_text(json.dumps({"id": "x", "name": "X", "title": "T",
+                                    "party": "republican", "role": "advisor",
+                                    "specialty": "S", "philosophy": "P",
+                                    "communication_style": "C",
+                                    "red_lins": ["typo"]}))
+        with pytest.raises(ValueError, match=str(path)):
+            Agent.from_json(path)
 
     def test_load_agents_empty_dir_raises(self, tmp_path: Path):
         with pytest.raises(ValueError, match="No agent JSON files"):
@@ -135,7 +157,9 @@ class TestProductionAgents:
         prompt = speaker.get_system_prompt("Test proposal.")
         for ally_id in speaker.allies:
             ally = next(a for a in REPUBLICAN_AGENTS if a.id == ally_id)
-            assert ally.name in prompt, f"Expected {ally.name} in resolved prompt"
+            assert f"{ally.name} ({ally.title})" in prompt, (
+                f"Expected '{ally.name} ({ally.title})' in resolved prompt"
+            )
             assert ally_id not in prompt, f"Raw id {ally_id} leaked into prompt"
 
     def test_prompt_contains_new_sections(self):
@@ -157,10 +181,32 @@ class TestProductionAgents:
 
 
 class TestRegistry:
-    def test_registry_resolves_unknown_ids_to_themselves(self):
-        register_agents([])
-        agent = _make_agent(
-            id="solo", party="republican", allies=["ghost"]
-        )
+    def test_resolve_id_falls_back_to_raw_for_unregistered(self):
+        # The autouse snapshot fixture restores the registry after each test;
+        # clear_registry() is safe here.
+        clear_registry()
+        agent = _make_agent(id="solo", party="republican", allies=["ghost_id"])
         text = agent._format_relationships()
-        assert "ghost" in text
+        assert "ghost_id" in text
+
+    def test_register_agents_raises_on_duplicate_id(self):
+        agent1 = _make_agent(id="dup", name="First")
+        agent2 = _make_agent(id="dup", name="Second")
+        clear_registry()
+        register_agents([agent1])
+        with pytest.raises(ValueError, match="already registered"):
+            register_agents([agent2])
+
+    def test_resolve_id_format_is_name_with_title(self):
+        clear_registry()
+        target = _make_agent(id="t", name="Senator Test", title="Chair of Testing")
+        register_agents([target])
+        ref = _make_agent(id="ref", party=target.party, allies=["t"])
+        text = ref._format_relationships()
+        assert "Senator Test (Chair of Testing)" in text
+
+    def test_clear_registry_empties_the_registry(self):
+        clear_registry()
+        agent = _make_agent(id="lonely", allies=["anything"])
+        # With an empty registry, the resolver returns the raw id.
+        assert agent._format_relationships().endswith("anything")

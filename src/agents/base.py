@@ -18,9 +18,23 @@ _AGENT_REGISTRY: dict[str, "Agent"] = {}
 
 
 def register_agents(agents: list["Agent"]) -> None:
-    """Register agents so allies/rivals can be resolved to names in prompts."""
+    """Register agents so allies/rivals can be resolved to names in prompts.
+
+    Raises ValueError if any agent's id is already registered.
+    """
     for agent in agents:
+        if agent.id in _AGENT_REGISTRY:
+            raise ValueError(
+                f"Agent id {agent.id!r} is already registered "
+                f"(existing: {_AGENT_REGISTRY[agent.id].name!r}, "
+                f"new: {agent.name!r})"
+            )
         _AGENT_REGISTRY[agent.id] = agent
+
+
+def clear_registry() -> None:
+    """Clear the agent registry. Intended for test isolation."""
+    _AGENT_REGISTRY.clear()
 
 
 def _resolve_id(agent_id: str) -> str:
@@ -66,7 +80,10 @@ class Agent:
         """Load an Agent from a JSON file."""
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return cls(**data)
+        try:
+            return cls(**data)
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Failed to load agent from {path}: {e}") from e
 
     def get_system_prompt(self, proposal_description: str, party_position: Optional[str] = None) -> str:
         """Generate the system prompt for this agent."""
