@@ -141,25 +141,11 @@ def build_main_graph(display_callback: Optional[Callable] = None):
             "phase": "resolution"
         }
 
-    def should_continue_debate(state: NegotiationState) -> Literal["debate", "vote"]:
-        """Determine if debate should continue or proceed to voting."""
-        current_round = state.get("negotiation_round", 0)
-        max_rounds = state.get("max_rounds", 5)
-
-        if current_round >= max_rounds:
-            return "vote"
-
-        # Could add more sophisticated logic here to detect consensus
-        return "debate"
-
     def after_debate_decision(state: NegotiationState) -> Literal["continue", "vote"]:
-        """After debate, decide whether to continue or vote."""
+        """After a debate round, continue if rounds remain, otherwise vote."""
         current_round = state.get("negotiation_round", 0)
-        max_rounds = state.get("max_rounds", 5)
-
-        # For simplicity, we do one debate round then vote
-        # In a more complex system, we could check for consensus
-        if current_round >= 1:  # After first debate round
+        max_rounds = state.get("max_rounds", 1)
+        if current_round >= max_rounds:
             return "vote"
         return "continue"
 
