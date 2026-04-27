@@ -98,7 +98,6 @@ class NegotiationState(TypedDict):
         "republican_deliberation",
         "democrat_deliberation",
         "cross_party_debate",
-        "amendment_proposal",
         "final_voting",
         "resolution"
     ]

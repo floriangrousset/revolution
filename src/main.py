@@ -69,6 +69,7 @@ async def run_interactive_session(display: NegotiationDisplay):
         display.show_party_votes(result.get("democrat_votes", []), "democrat")
         display.show_voting_results(voting_result)
         display.show_final_result(voting_result)
+        display.show_amendments(result.get("amendments_proposed", []))
 
     except Exception as e:
         console.print(f"[red bold]Error during negotiation: {e}[/red bold]")

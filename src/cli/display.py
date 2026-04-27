@@ -186,6 +186,20 @@ class NegotiationDisplay:
         ))
         self.console.print()
 
+    def show_amendments(self, amendments: list[str]):
+        """Display amendments proposed by voters during final voting."""
+        if not amendments:
+            return
+        body = "\n".join(f"- {a}" for a in amendments)
+        self.console.print(Panel(
+            body,
+            title="[yellow]Amendments Proposed by Voters[/yellow]",
+            border_style="yellow",
+            box=ROUNDED,
+            padding=(1, 2)
+        ))
+        self.console.print()
+
     def display_callback(self, item: Union[AgentMessage, Vote]):
         """Callback function for displaying items during negotiation."""
         if isinstance(item, AgentMessage):

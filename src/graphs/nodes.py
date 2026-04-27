@@ -243,27 +243,43 @@ async def form_party_position(state: PartyState, display_callback=None) -> dict[
 # ============================================================================
 
 async def cross_party_debate(state: NegotiationState, display_callback=None) -> dict[str, Any]:
-    """Conduct cross-party debate between party heads and advisors."""
+    """Conduct cross-party debate between party heads and advisors.
+
+    On round 0 the heads use the opening prompt. On subsequent rounds they
+    rebut the accumulated transcript from prior rounds so the debate builds
+    on itself rather than restarting each round.
+    """
     model = get_model()
 
     rep_head = get_party_head("republican")
     dem_head = get_party_head("democrat")
 
+    current_round = state["negotiation_round"]
+    is_opening_round = current_round == 0
+    prior_transcript = format_discussion(state.get("debate_transcript", []))
+
     debate_messages = []
 
-    # Republican head opens
-    rep_opening_prompt = DEBATE_OPENING_PROMPT.format(
-        proposal_description=state["proposal"].description,
-        own_position=state["republican_position"] or "Not yet formed",
-        opposing_position=state["democrat_position"] or "Not yet formed",
-        round_number=state["negotiation_round"],
-        max_rounds=state["max_rounds"],
-        agent_name=rep_head.name
-    )
+    # Republican head speaks
+    if is_opening_round:
+        rep_head_prompt = DEBATE_OPENING_PROMPT.format(
+            proposal_description=state["proposal"].description,
+            own_position=state["republican_position"] or "Not yet formed",
+            opposing_position=state["democrat_position"] or "Not yet formed",
+            round_number=current_round + 1,
+            max_rounds=state["max_rounds"],
+            agent_name=rep_head.name
+        )
+    else:
+        rep_head_prompt = DEBATE_REBUTTAL_PROMPT.format(
+            proposal_description=state["proposal"].description,
+            debate_transcript=prior_transcript,
+            agent_name=rep_head.name
+        )
 
     rep_response = await model.ainvoke([
         SystemMessage(content=rep_head.get_system_prompt(state["proposal"].description, state["republican_position"])),
-        HumanMessage(content=rep_opening_prompt)
+        HumanMessage(content=rep_head_prompt)
     ])
 
     rep_msg = AgentMessage(
@@ -278,19 +294,30 @@ async def cross_party_debate(state: NegotiationState, display_callback=None) -> 
     if display_callback:
         display_callback(rep_msg)
 
-    # Democrat head responds
-    dem_opening_prompt = DEBATE_OPENING_PROMPT.format(
-        proposal_description=state["proposal"].description,
-        own_position=state["democrat_position"] or "Not yet formed",
-        opposing_position=state["republican_position"] or "Not yet formed",
-        round_number=state["negotiation_round"],
-        max_rounds=state["max_rounds"],
-        agent_name=dem_head.name
+    # Democrat head responds (always sees the just-spoken Republican turn,
+    # plus prior rounds if any)
+    dem_context = format_discussion(
+        list(state.get("debate_transcript", [])) + debate_messages
     )
+    if is_opening_round:
+        dem_head_prompt = DEBATE_OPENING_PROMPT.format(
+            proposal_description=state["proposal"].description,
+            own_position=state["democrat_position"] or "Not yet formed",
+            opposing_position=state["republican_position"] or "Not yet formed",
+            round_number=current_round + 1,
+            max_rounds=state["max_rounds"],
+            agent_name=dem_head.name
+        )
+    else:
+        dem_head_prompt = DEBATE_REBUTTAL_PROMPT.format(
+            proposal_description=state["proposal"].description,
+            debate_transcript=dem_context,
+            agent_name=dem_head.name
+        )
 
     dem_response = await model.ainvoke([
         SystemMessage(content=dem_head.get_system_prompt(state["proposal"].description, state["democrat_position"])),
-        HumanMessage(content=dem_opening_prompt)
+        HumanMessage(content=dem_head_prompt)
     ])
 
     dem_msg = AgentMessage(
@@ -310,7 +337,9 @@ async def cross_party_debate(state: NegotiationState, display_callback=None) -> 
     dem_advisors = get_advisors("democrat")
 
     for rep_adv, dem_adv in zip(rep_advisors[:2], dem_advisors[:2]):  # Just first 2 advisors each
-        debate_so_far = format_discussion(debate_messages)
+        debate_so_far = format_discussion(
+            list(state.get("debate_transcript", [])) + debate_messages
+        )
 
         # Republican advisor rebuttal
         rep_rebuttal_prompt = DEBATE_REBUTTAL_PROMPT.format(
@@ -337,7 +366,9 @@ async def cross_party_debate(state: NegotiationState, display_callback=None) -> 
             display_callback(rep_adv_msg)
 
         # Democrat advisor rebuttal
-        debate_so_far = format_discussion(debate_messages)
+        debate_so_far = format_discussion(
+            list(state.get("debate_transcript", [])) + debate_messages
+        )
         dem_rebuttal_prompt = DEBATE_REBUTTAL_PROMPT.format(
             proposal_description=state["proposal"].description,
             debate_transcript=debate_so_far,
@@ -404,9 +435,20 @@ async def conduct_voting(state: NegotiationState, display_callback=None) -> dict
             if display_callback:
                 display_callback(vote)
 
+    # Aggregate unique amendments across all voters, preserving first-seen order.
+    seen: set[str] = set()
+    aggregated_amendments: list[str] = []
+    for vote in republican_votes + democrat_votes:
+        for amendment in vote.amendments:
+            normalized = amendment.strip()
+            if normalized and normalized not in seen:
+                seen.add(normalized)
+                aggregated_amendments.append(normalized)
+
     return {
         "republican_votes": republican_votes,
         "democrat_votes": democrat_votes,
+        "amendments_proposed": aggregated_amendments,
         "phase": "resolution"
     }
 
