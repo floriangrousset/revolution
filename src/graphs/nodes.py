@@ -1,8 +1,9 @@
 """Node implementations for the negotiation graphs."""
 import os
-from typing import Any
+from typing import Any, Literal
 from langchain_anthropic import ChatAnthropic
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage
+from pydantic import SecretStr
 
 from ..state.types import PartyState, NegotiationState, AgentMessage, Vote
 from ..agents.base import Agent
@@ -18,13 +19,31 @@ from ..agents.prompts import (
 )
 
 
+def _content_text(response: BaseMessage) -> str:
+    """Narrow a chat-model response's content to a string.
+
+    `BaseMessage.content` is typed `str | list[...]` to support multimodal
+    payloads, but our text-only ChatAnthropic calls always return str.
+    Asserting here keeps every call site simply typed.
+    """
+    content = response.content
+    if isinstance(content, str):
+        return content
+    raise TypeError(
+        f"Expected str content from model, got {type(content).__name__}"
+    )
+
+
 def get_model() -> ChatAnthropic:
     """Create the Claude model instance."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY") or ""
     return ChatAnthropic(
-        model=os.environ.get("MODEL_NAME", "claude-opus-4-5-20250514"),
-        api_key=os.environ.get("ANTHROPIC_API_KEY"),
-        max_tokens=2048,
+        model_name=os.environ.get("MODEL_NAME", "claude-opus-4-5-20250514"),
+        api_key=SecretStr(api_key),
+        max_tokens_to_sample=2048,
         temperature=0.8,
+        timeout=None,
+        stop=None,
     )
 
 
@@ -91,7 +110,7 @@ async def party_head_intro(state: PartyState, display_callback=None) -> dict[str
         agent_name=head.name,
         party=party,
         role=head.role,
-        content=response.content,
+        content=_content_text(response),
         phase="intro"
     )
 
@@ -141,7 +160,7 @@ async def advisor_discussion(state: PartyState, display_callback=None) -> dict[s
             agent_name=advisor.name,
             party=party,
             role=advisor.role,
-            content=response.content,
+            content=_content_text(response),
             phase="advisor_discussion"
         )
 
@@ -185,7 +204,7 @@ async def assistant_research(state: PartyState, display_callback=None) -> dict[s
             agent_name=assistant.name,
             party=party,
             role=assistant.role,
-            content=response.content,
+            content=_content_text(response),
             phase="assistant_research"
         )
 
@@ -224,7 +243,7 @@ async def form_party_position(state: PartyState, display_callback=None) -> dict[
         agent_name=head.name,
         party=party,
         role=head.role,
-        content=response.content,
+        content=_content_text(response),
         phase="synthesis"
     )
 
@@ -233,7 +252,7 @@ async def form_party_position(state: PartyState, display_callback=None) -> dict[
 
     return {
         "discussion": [message],
-        "party_position": response.content,
+        "party_position": _content_text(response),
         "phase": "voting"
     }
 
@@ -287,7 +306,7 @@ async def cross_party_debate(state: NegotiationState, display_callback=None) -> 
         agent_name=rep_head.name,
         party="republican",
         role=rep_head.role,
-        content=rep_response.content,
+        content=_content_text(rep_response),
         phase="cross_party_debate"
     )
     debate_messages.append(rep_msg)
@@ -325,7 +344,7 @@ async def cross_party_debate(state: NegotiationState, display_callback=None) -> 
         agent_name=dem_head.name,
         party="democrat",
         role=dem_head.role,
-        content=dem_response.content,
+        content=_content_text(dem_response),
         phase="cross_party_debate"
     )
     debate_messages.append(dem_msg)
@@ -358,7 +377,7 @@ async def cross_party_debate(state: NegotiationState, display_callback=None) -> 
             agent_name=rep_adv.name,
             party="republican",
             role=rep_adv.role,
-            content=rep_adv_response.content,
+            content=_content_text(rep_adv_response),
             phase="cross_party_debate"
         )
         debate_messages.append(rep_adv_msg)
@@ -385,7 +404,7 @@ async def cross_party_debate(state: NegotiationState, display_callback=None) -> 
             agent_name=dem_adv.name,
             party="democrat",
             role=dem_adv.role,
-            content=dem_adv_response.content,
+            content=_content_text(dem_adv_response),
             phase="cross_party_debate"
         )
         debate_messages.append(dem_adv_msg)
@@ -409,13 +428,19 @@ async def conduct_voting(state: NegotiationState, display_callback=None) -> dict
     # Prepare debate summary
     debate_summary = format_discussion(state.get("debate_transcript", []))
 
-    republican_votes = []
-    democrat_votes = []
+    republican_votes: list[Vote] = []
+    democrat_votes: list[Vote] = []
 
     # Vote all agents
-    for party, votes_list in [("republican", republican_votes), ("democrat", democrat_votes)]:
+    parties: list[tuple[Literal["republican", "democrat"], list[Vote]]] = [
+        ("republican", republican_votes),
+        ("democrat", democrat_votes),
+    ]
+    for party, votes_list in parties:
         agents = get_agents_by_party(party)
-        party_position = state.get(f"{party}_position", "")
+        party_position = (
+            state["republican_position"] if party == "republican" else state["democrat_position"]
+        ) or ""
 
         for agent in agents:
             voting_prompt = agent.get_voting_prompt(
@@ -429,7 +454,7 @@ async def conduct_voting(state: NegotiationState, display_callback=None) -> dict
             ])
 
             # Parse the vote from response
-            vote = parse_vote(response.content, agent, party)
+            vote = parse_vote(_content_text(response), agent, party)
             votes_list.append(vote)
 
             if display_callback:
@@ -453,11 +478,16 @@ async def conduct_voting(state: NegotiationState, display_callback=None) -> dict
     }
 
 
-def parse_vote(response: str, agent: Agent, party: str) -> Vote:
+def parse_vote(
+    response: str,
+    agent: Agent,
+    party: Literal["republican", "democrat"],
+) -> Vote:
     """Parse vote from agent response."""
     content = response.upper()
 
     # Determine vote
+    vote_value: Literal["support", "oppose", "abstain"]
     if "VOTE: SUPPORT" in content or "VOTE:SUPPORT" in content:
         vote_value = "support"
     elif "VOTE: OPPOSE" in content or "VOTE:OPPOSE" in content:

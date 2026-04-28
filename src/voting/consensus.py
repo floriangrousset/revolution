@@ -108,7 +108,7 @@ def get_vote_summary(votes: list[Vote], party: str) -> str:
     lines = [f"\n{party.upper()} PARTY VOTES:"]
     lines.append("-" * 40)
 
-    for vote in sorted(votes, key=lambda v: (v.role != "party_head", v.role != "advisor", v.agent_id)):
+    for vote in sorted(votes, key=lambda v: (v.agent_role != "party_head", v.agent_role != "advisor", v.agent_id)):
         vote_symbol = {
             "support": "YES",
             "oppose": "NO",

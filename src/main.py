@@ -36,13 +36,12 @@ async def run_interactive_session(display: NegotiationDisplay):
         return
 
     # Get max rounds
-    max_rounds = Prompt.ask(
+    max_rounds_input = Prompt.ask(
         "[bold yellow]Maximum negotiation rounds[/bold yellow]",
         default="1"
     )
     try:
-        max_rounds = int(max_rounds)
-        max_rounds = max(1, min(max_rounds, 5))  # Clamp between 1-5
+        max_rounds = max(1, min(int(max_rounds_input), 5))  # Clamp between 1-5
     except ValueError:
         max_rounds = 1
 

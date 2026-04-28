@@ -1,0 +1,19 @@
+# Local pre-commit hooks mirroring the fast subset of CI
+# (.github/workflows/_checks.yml).
+#
+# Install once:
+#     pre-commit install
+#
+# Run on demand against the whole tree:
+#     pre-commit run --all-files
+#
+# CI is the source of truth for "everything passes". These hooks exist to
+# shorten the feedback loop on the cheap gate (lint + auto-fix) so noise
+# stops landing in PRs.
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.12
+    hooks:
+      - id: ruff
+        args: [--fix]

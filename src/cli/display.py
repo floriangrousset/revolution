@@ -13,7 +13,7 @@ from ..voting.consensus import VotingResult
 class NegotiationDisplay:
     """Handles all console output for the negotiation system."""
 
-    def __init__(self, console: Console = None, verbose: bool = True):
+    def __init__(self, console: Console | None = None, verbose: bool = True):
         self.console = console or Console()
         self.verbose = verbose
         self.party_colors = {

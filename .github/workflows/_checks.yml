@@ -26,9 +26,6 @@ jobs:
   typecheck:
     name: typecheck
     runs-on: ubuntu-latest
-    # mypy is informational while the codebase is brought to a clean baseline.
-    # Flip continue-on-error off (or remove it) once the count is at zero.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
