@@ -6,7 +6,6 @@ extracted from votes are aggregated into NegotiationState.
 """
 import pytest
 
-from src.graphs import main_graph as main_graph_module
 from src.graphs import nodes as nodes_module
 from src.graphs.main_graph import run_negotiation
 

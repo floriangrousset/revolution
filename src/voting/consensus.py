@@ -1,6 +1,5 @@
 """Voting and consensus logic."""
 from dataclasses import dataclass
-from typing import Literal
 
 from ..state.types import Vote
 

@@ -4,7 +4,7 @@ from typing import Any
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import SystemMessage, HumanMessage
 
-from ..state.types import PartyState, NegotiationState, AgentMessage, Vote, Proposal
+from ..state.types import PartyState, NegotiationState, AgentMessage, Vote
 from ..agents.base import Agent
 from ..agents.republican import REPUBLICAN_AGENTS
 from ..agents.democrat import DEMOCRAT_AGENTS
