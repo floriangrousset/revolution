@@ -21,6 +21,9 @@ cp .env.example .env
 pytest
 ruff check .
 mypy src
+
+# Pre-commit hooks (runs ruff --fix on each commit)
+pip install pre-commit && pre-commit install
 ```
 
 ## Architecture
