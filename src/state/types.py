@@ -1,7 +1,6 @@
 """State type definitions for the negotiation system."""
 from typing import Annotated, TypedDict, Literal, Optional
 from dataclasses import dataclass, field
-import operator
 import uuid
 
 

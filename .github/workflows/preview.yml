@@ -1,0 +1,30 @@
+name: preview
+
+# Runs on every pull request targeting develop or main.
+# Equivalent of a "preview deploy" gate: the PR must be green before merge.
+# No deploy step — preview here means "preview of the merge", not a hosted env.
+
+on:
+  pull_request:
+    branches: [develop, main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  # Cancel an in-flight preview run when the PR is updated; we only ever care
+  # about the latest commit on a PR.
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    if: github.event.pull_request.draft == false
+    uses: ./.github/workflows/_checks.yml
+
+  build:
+    # Catch packaging breakage in PR rather than at deploy time.
+    if: github.event.pull_request.draft == false
+    needs: checks
+    uses: ./.github/workflows/_build.yml
