@@ -19,6 +19,7 @@ dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
     "pydantic-settings>=2.6.0",
+    "reportlab>=4.2.0",
 ]
 
 [project.optional-dependencies]
@@ -48,3 +49,7 @@ target-version = "py311"
 [tool.mypy]
 python_version = "3.11"
 strict = false
+
+[[tool.mypy.overrides]]
+module = ["reportlab.*"]
+ignore_missing_imports = true

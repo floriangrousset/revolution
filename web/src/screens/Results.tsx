@@ -11,6 +11,7 @@ import { PartyTag, StatusTag, VOTE_META, VoteTag } from "../components/Tags";
 import { ROLE_META } from "../meta";
 import { partyBright, partyColor, partyLabel } from "../theme";
 import type { Amendment, Persona, Turn, VoteRecord } from "../types";
+import { ExportModal } from "./ExportModal";
 
 interface ResultsProps {
   nav: (route: string, param?: string) => void;
@@ -35,6 +36,7 @@ export function Results({ nav, param }: ResultsProps) {
   const [amendments, setAmendments] = useState<Amendment[]>([]);
   const [tab, setTab] = useState<Tab>("breakdown");
   const [error, setError] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -145,6 +147,9 @@ export function Results({ nav, param }: ResultsProps) {
             <Btn kind="ghost" icon="play" onClick={() => nav("arena", debate.id)}>
               Replay
             </Btn>
+            <Btn kind="primary" icon="download" onClick={() => setExportOpen(true)}>
+              Export
+            </Btn>
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 30, marginTop: 26 }}>
@@ -231,6 +236,13 @@ export function Results({ nav, param }: ResultsProps) {
       {tab === "timeline" && <Timeline changes={changes} />}
       {tab === "transcript" && <FullTranscript turns={turns} debate={debate} nav={nav} />}
       {tab === "amendments" && <Amendments amendments={amendments} />}
+
+      <ExportModal
+        open={exportOpen}
+        onClose={() => setExportOpen(false)}
+        debateId={debate.id}
+        debateTitle={debate.title}
+      />
     </div>
   );
 }
