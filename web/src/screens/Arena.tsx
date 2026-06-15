@@ -163,7 +163,12 @@ export function Arena({ nav, param }: ArenaProps) {
     };
     const onTurnStart = (e: MessageEvent) => {
       const data = JSON.parse(e.data) as { agent: string; phase: string };
-      setActiveAgent(data.agent);
+      // The framework emits its own "system" announcements (proposal received,
+      // beginning party deliberation, …). Don't let them clobber the active
+      // speaker — they aren't seated personas.
+      if (data.agent !== "system") {
+        setActiveAgent(data.agent);
+      }
       setActivePhase(data.phase);
     };
     const onTurnEnd = (e: MessageEvent) => {
@@ -229,6 +234,12 @@ export function Arena({ nav, param }: ArenaProps) {
     return t;
   }, [votes]);
   const totalVotes = personas.length || 22;
+  // Speaker turns only — skip the framework's "system" announcements so they
+  // don't pollute the counter or the spotlight's "last turn" lookup.
+  const speakerTurns = useMemo(
+    () => transcript.filter((t) => personaById[t.agent]),
+    [transcript, personaById],
+  );
 
   if (!id) {
     return (
@@ -303,9 +314,10 @@ export function Arena({ nav, param }: ArenaProps) {
           <SpeakerSpotlight
             stage={stage}
             errorMsg={errorMsg}
-            transcript={transcript}
+            transcript={speakerTurns}
             personaById={personaById}
             activeAgent={activeAgent}
+            activePhase={activePhase}
             tally={finalTally || tally}
             totalVotes={totalVotes}
           />
@@ -352,14 +364,14 @@ export function Arena({ nav, param }: ArenaProps) {
             <span className="mono" style={{ fontSize: 11.5, color: "var(--txt-faint)" }}>
               {stage === "voting" || stage === "done"
                 ? `${votes.length}/${totalVotes}`
-                : `${transcript.length} turns`}
+                : `${speakerTurns.length} turn${speakerTurns.length === 1 ? "" : "s"}`}
             </span>
           </div>
           <div ref={feedRef} style={{ flex: 1, overflow: "auto", padding: "16px 18px" }}>
             {stage === "voting" || stage === "done" ? (
               <VoteLedger votes={votes} personaById={personaById} />
             ) : (
-              <TranscriptFeed transcript={transcript} personaById={personaById} />
+              <TranscriptFeed transcript={speakerTurns} personaById={personaById} />
             )}
           </div>
           <div style={{ padding: "16px 20px", borderTop: "1px solid var(--ink-line)", background: "var(--ink2)" }}>
@@ -640,6 +652,7 @@ function SpeakerSpotlight({
   transcript,
   personaById,
   activeAgent,
+  activePhase,
   tally,
   totalVotes,
 }: {
@@ -648,6 +661,7 @@ function SpeakerSpotlight({
   transcript: Turn[];
   personaById: Record<string, Persona>;
   activeAgent: string | null;
+  activePhase: string;
   tally: { support: number; oppose: number; abstain: number };
   totalVotes: number;
 }) {
@@ -779,10 +793,87 @@ function SpeakerSpotlight({
       </div>
     );
   }
-  const lastTurn = activeAgent
+  // Resolve who's "on the floor" and what they're saying.
+  // - If `activeAgent` is set but their turn_end hasn't landed yet, show a
+  //   composing placeholder with their avatar/name (LLM is generating).
+  // - Else fall through to the most recent completed turn.
+  const activePersona = activeAgent ? personaById[activeAgent] : null;
+  const matchingTurn = activeAgent
     ? transcript.filter((t) => t.agent === activeAgent).slice(-1)[0]
-    : transcript[transcript.length - 1];
-  if (!lastTurn || !personaById[lastTurn.agent]) {
+    : undefined;
+  const fallbackTurn = transcript[transcript.length - 1];
+  const showTurn = matchingTurn || fallbackTurn;
+
+  if (activePersona && !matchingTurn) {
+    return (
+      <div
+        className="ink-panel"
+        style={{
+          padding: "20px 24px",
+          borderLeft: `3px solid ${partyColor(activePersona.party)}`,
+          minHeight: 140,
+          display: "flex",
+          gap: 18,
+        }}
+      >
+        <div style={{ textAlign: "center" }}>
+          <Avatar p={activePersona} size={56} />
+          <div style={{ marginTop: 8 }}>
+            <PostureTag posture={activePersona.negotiation_posture} />
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 3 }}>
+            <span
+              className="serif"
+              style={{ fontSize: 18, fontWeight: 600, whiteSpace: "nowrap" }}
+            >
+              {activePersona.name}
+            </span>
+            <PartyTag party={activePersona.party} size="sm" />
+          </div>
+          <div
+            style={{
+              fontSize: 12,
+              color: "var(--txt-faint)",
+              marginBottom: 14,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {activePersona.title} ·{" "}
+            <span style={{ color: "var(--gold)" }}>
+              {PHASE_LABEL[activePhase] || activePhase}
+            </span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              fontSize: 13.5,
+              color: "var(--txt-mute)",
+              fontStyle: "italic",
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "var(--gold-bright)",
+                animation: "blink 1.4s step-end infinite",
+              }}
+            />
+            Composing remarks…
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!showTurn || !personaById[showTurn.agent]) {
     return (
       <div
         className="ink-panel"
@@ -797,7 +888,7 @@ function SpeakerSpotlight({
       </div>
     );
   }
-  const p = personaById[lastTurn.agent];
+  const p = personaById[showTurn.agent];
   return (
     <div
       className="ink-panel"
@@ -832,10 +923,10 @@ function SpeakerSpotlight({
             textOverflow: "ellipsis",
           }}
         >
-          {p.title} · <span style={{ color: "var(--gold)" }}>{PHASE_LABEL[lastTurn.phase]}</span>
+          {p.title} · <span style={{ color: "var(--gold)" }}>{PHASE_LABEL[showTurn.phase]}</span>
         </div>
         <p style={{ fontSize: 14.5, lineHeight: 1.62, color: "var(--txt)", margin: 0 }}>
-          {lastTurn.content}
+          {showTurn.content}
         </p>
       </div>
     </div>

@@ -74,6 +74,19 @@ def _upsert_index(entry: dict[str, Any]) -> None:
     _write_index(entries)
 
 
+def _patch_index(debate_id: str, **patches: Any) -> None:
+    """Patch a single index.json row in place (no-op if id missing)."""
+    entries = _read_index()
+    changed = False
+    for entry in entries:
+        if entry["id"] == debate_id:
+            entry.update(patches)
+            changed = True
+            break
+    if changed:
+        _write_index(entries)
+
+
 def list_debates() -> list[dict[str, Any]]:
     """Sorted newest-first index of all debates."""
     return _read_index()
@@ -243,6 +256,7 @@ async def run_debate(debate_id: str) -> None:
     started = time.monotonic()
     record["status"] = "running"
     _atomic_write_json(_debate_dir(debate_id) / "debate.json", record)
+    _patch_index(debate_id, status="running")
     broadcaster.publish(debate_id, Event.phase("intro"))
 
     turn_counter = {"i": 0}
@@ -299,6 +313,7 @@ async def run_debate(debate_id: str) -> None:
         record["status"] = "error"
         record["error"] = str(e)
         _atomic_write_json(_debate_dir(debate_id) / "debate.json", record)
+        _patch_index(debate_id, status="error")
         broadcaster.mark_done(debate_id, Event.error(str(e)))
         broadcaster.publish(debate_id, Event.done())
         return
