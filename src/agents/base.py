@@ -11,7 +11,12 @@ NegotiationPosture = Literal[
     "bomb_thrower",
     "institutionalist",
 ]
-Party = Literal["republican", "democrat"]
+
+# Party is a registry-driven enum, not a closed literal. The engine ships with
+# `republican` and `democrat` baked in, but the file-DB layer lets users register
+# new parties (e.g. libertarian, green) at runtime. We validate "non-empty
+# string" here; the parties registry is the canonical source of valid ids.
+Party = str
 Role = Literal["party_head", "advisor", "assistant"]
 
 _AGENT_REGISTRY: dict[str, "Agent"] = {}
@@ -78,7 +83,7 @@ class Agent:
     persona_last_updated: str = ""
 
     def __post_init__(self) -> None:
-        if self.party not in get_args(Party):
+        if not isinstance(self.party, str) or not self.party.strip():
             raise ValueError(f"Agent '{self.id}': invalid party {self.party!r}")
         if self.role not in get_args(Role):
             raise ValueError(f"Agent '{self.id}': invalid role {self.role!r}")

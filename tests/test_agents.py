@@ -33,9 +33,16 @@ def _make_agent(**overrides) -> Agent:
 
 
 class TestLiteralValidation:
-    def test_invalid_party_raises(self):
+    def test_empty_party_raises(self):
         with pytest.raises(ValueError, match="invalid party"):
-            _make_agent(party="independent")
+            _make_agent(party="")
+
+    def test_custom_party_accepted(self):
+        # Custom parties (libertarian, green, etc.) are first-class:
+        # the dataclass accepts any non-empty string and the parties
+        # registry decides which ids are recognized.
+        agent = _make_agent(party="libertarian")
+        assert agent.party == "libertarian"
 
     def test_invalid_role_raises(self):
         with pytest.raises(ValueError, match="invalid role"):
