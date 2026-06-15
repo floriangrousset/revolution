@@ -45,3 +45,11 @@ htmlcov/
 
 # Ruff
 .ruff_cache/
+
+# File-DB (runtime; seeded from src/agents/data/ on first boot)
+/data/
+
+# Web app
+web/node_modules/
+web/dist/
+web/.vite/
