@@ -24,7 +24,11 @@ class Settings(BaseSettings):
     )
 
     anthropic_api_key: str = Field(default="", alias="ANTHROPIC_API_KEY")
-    model_name: str = Field(default="claude-opus-4-5-20250514", alias="MODEL_NAME")
+    # CLI fallback only — the web UI's Launch screen always sends a `model`
+    # field, which the per-debate runner threads into get_model() via a
+    # contextvar. The default here just exists so `/api/health` has something
+    # to report when nothing has been pinned yet.
+    model_name: str = Field(default="claude-sonnet-4-6", alias="MODEL_NAME")
     data_dir: Path = Field(default=REPO_ROOT / "data", alias="DATA_DIR")
     cors_origins: list[str] = Field(
         default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"],

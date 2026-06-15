@@ -30,21 +30,21 @@ interface ModelOption {
 
 const MODELS: ModelOption[] = [
   {
-    id: "claude-opus-4-5-20250514",
-    name: "Claude Opus 4.5",
+    id: "claude-opus-4-8",
+    name: "Claude Opus 4.8",
     tag: "Highest fidelity",
     note: "Richest reasoning; recommended for nuanced debate.",
     cost: "~$0.90 / debate",
   },
   {
-    id: "claude-sonnet-4-5",
-    name: "Claude Sonnet 4.5",
+    id: "claude-sonnet-4-6",
+    name: "Claude Sonnet 4.6",
     tag: "Balanced",
     note: "Fast and cost-efficient; great default.",
     cost: "~$0.22 / debate",
   },
   {
-    id: "claude-haiku-4-5-20251001",
+    id: "claude-haiku-4-5",
     name: "Claude Haiku 4.5",
     tag: "Fastest",
     note: "Quick simulations and dry runs.",

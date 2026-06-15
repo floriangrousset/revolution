@@ -3,12 +3,18 @@ from __future__ import annotations
 
 import logging
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import db
-from .routers import debates, parties, personas, relationships, stream
-from .settings import get_settings
+# Populate os.environ from .env so the LangGraph engine's `get_model()` (which
+# reads ANTHROPIC_API_KEY via os.environ) sees the same values pydantic-settings
+# parses for our own use. The CLI already does this in src/main.py.
+load_dotenv()
+
+from . import db  # noqa: E402  (must follow load_dotenv)
+from .routers import debates, parties, personas, relationships, stream  # noqa: E402
+from .settings import get_settings  # noqa: E402
 
 log = logging.getLogger(__name__)
 
