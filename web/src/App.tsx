@@ -3,7 +3,7 @@ import { api } from "./api";
 import { DisclaimerBar } from "./components/DisclaimerBar";
 import { Sidebar } from "./components/Sidebar";
 import { useHashRoute } from "./hooks";
-import { ArenaWaiting } from "./screens/ArenaWaiting";
+import { Arena } from "./screens/Arena";
 import { Dashboard } from "./screens/Dashboard";
 import { Graph } from "./screens/Graph";
 import { Launch } from "./screens/Launch";
@@ -32,7 +32,7 @@ export function App() {
       Screen = <Launch nav={nav} />;
       break;
     case "arena":
-      Screen = <ArenaWaiting nav={nav} param={param} />;
+      Screen = <Arena nav={nav} param={param} />;
       break;
     case "results":
       Screen = <Results nav={nav} param={param} />;
