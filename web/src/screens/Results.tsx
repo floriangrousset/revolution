@@ -1526,14 +1526,25 @@ function StatTile({
 }
 
 function CaucusBars({ votes, debate }: { votes: VoteRecord[]; debate: DebateDetail }) {
-  const parties = debate.config.parties.length > 0 ? debate.config.parties : ["democrat", "republican"];
+  // Show every party that either (a) was on the launch's `parties` list, or
+  // (b) actually cast a vote. This way custom parties surface here too if
+  // they ever start voting in the engine.
+  const partyIds = useMemo(() => {
+    const ids = new Set<string>(debate.config.parties || []);
+    votes.forEach((v) => ids.add(v.party));
+    if (ids.size === 0) {
+      ids.add("democrat");
+      ids.add("republican");
+    }
+    return Array.from(ids);
+  }, [debate.config.parties, votes]);
   return (
     <div style={{ display: "grid", gap: 14 }}>
-      {parties.map((party) => {
+      {partyIds.map((party) => {
         const list = votes.filter((v) => v.party === party);
         const t = { support: 0, oppose: 0, abstain: 0 };
         list.forEach((v) => t[v.vote]++);
-        const seated = 11; // engine ships 11 per ground-truth party
+        const seated = list.length > 0 ? Math.max(11, list.length) : 11;
         return (
           <div key={party}>
             <div

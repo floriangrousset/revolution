@@ -12,6 +12,7 @@ export const NAV: NavItem[] = [
   { route: "dashboard", icon: "dashboard", label: "The Floor" },
   { route: "launch", icon: "launch", label: "Launch Debate" },
   { route: "personas", icon: "personas", label: "Persona Manager" },
+  { route: "parties", icon: "flag", label: "Party Manager" },
   { route: "graph", icon: "graph", label: "Relationship Graph" },
 ];
 

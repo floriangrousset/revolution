@@ -3,9 +3,11 @@ import { api } from "./api";
 import { DisclaimerBar } from "./components/DisclaimerBar";
 import { Sidebar } from "./components/Sidebar";
 import { useHashRoute } from "./hooks";
+import { setPartyRegistry } from "./theme";
 import { Dashboard } from "./screens/Dashboard";
 import { Graph } from "./screens/Graph";
 import { Launch } from "./screens/Launch";
+import { Parties } from "./screens/Parties";
 import { Personas } from "./screens/Personas";
 import { Results } from "./screens/Results";
 
@@ -20,6 +22,9 @@ export function App() {
       .catch(() => {
         /* server might still be starting; sidebar shows the default */
       });
+    // Hydrate the party-color registry early so theme.partyColor() &c. can
+    // resolve custom parties (libertarian, green, …) anywhere in the app.
+    void api.listParties().then((r) => setPartyRegistry(r.parties));
   }, []);
 
   // Legacy `#/arena/{id}` → redirect to the Results page (Overview tab now
@@ -32,6 +37,9 @@ export function App() {
   switch (route) {
     case "personas":
       Screen = <Personas nav={nav} param={param} />;
+      break;
+    case "parties":
+      Screen = <Parties nav={nav} param={param} />;
       break;
     case "launch":
       Screen = <Launch nav={nav} />;

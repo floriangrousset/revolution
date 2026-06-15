@@ -27,11 +27,81 @@ from .settings import REPO_ROOT, get_settings
 
 log = logging.getLogger(__name__)
 
-# Default colors for the two seeded parties. Custom parties pick gold.
+# Default seed parties (both the two ground-truth caucuses the engine knows
+# about and any common custom parties the user has spun up). Metadata is
+# retro-filled on startup if a party row is missing fields.
 _DEFAULT_PARTIES: list[dict[str, Any]] = [
-    {"id": "democrat", "label": "Democratic Caucus", "color": "#2E5AA8"},
-    {"id": "republican", "label": "Republican Conference", "color": "#C0392B"},
+    {
+        "id": "democrat",
+        "label": "Democratic Caucus",
+        "color": "#2E5AA8",
+        "ideology": "Modern American liberalism",
+        "founded_year": 1828,
+        "motto": "Working for a stronger middle class",
+        "description": (
+            "The Democratic Party is one of the two major contemporary U.S. political "
+            "parties. Its modern coalition centers on social-safety-net expansion, civil "
+            "rights, labor protections, climate action, and a regulated mixed economy."
+        ),
+        "created_at": "2026-06-15T00:00:00+00:00",
+    },
+    {
+        "id": "republican",
+        "label": "Republican Conference",
+        "color": "#C0392B",
+        "ideology": "Modern American conservatism",
+        "founded_year": 1854,
+        "motto": "Limited government, individual liberty, strong defense",
+        "description": (
+            "The Republican Party is one of the two major contemporary U.S. political "
+            "parties. Its modern coalition centers on constitutional originalism, "
+            "lower taxation, free-enterprise economics, religious-liberty protections, "
+            "and a strong national defense."
+        ),
+        "created_at": "2026-06-15T00:00:00+00:00",
+    },
 ]
+
+# Default metadata for parties seeded after the fact (e.g. created via the UI
+# before the schema gained these fields). Anything missing is filled in.
+_PARTY_FALLBACK_META: dict[str, dict[str, Any]] = {
+    "libertarian": {
+        "label": "Libertarian Caucus",
+        "color": "#C2A14D",
+        "ideology": "Classical liberalism / civil-libertarian populism",
+        "founded_year": 1971,
+        "motto": "Maximum freedom, minimum government",
+        "description": (
+            "The Libertarian Party advocates for free markets, civil liberties, "
+            "non-interventionism, and a sharply limited federal government. It is the "
+            "largest U.S. third party by registered membership."
+        ),
+    },
+    "green": {
+        "label": "Green Caucus",
+        "color": "#2E8B57",
+        "ideology": "Green politics / eco-socialism",
+        "founded_year": 2001,
+        "motto": "Ecology, social justice, grassroots democracy, peace",
+        "description": (
+            "The Green Party of the United States organizes around four pillars: "
+            "ecological wisdom, social justice, grassroots democracy, and "
+            "non-violence. Its policy agenda emphasizes climate action, economic "
+            "redistribution, and demilitarization."
+        ),
+    },
+}
+
+# Required party fields and the per-field defaults applied when a row is read
+# from disk and missing them.
+_PARTY_FIELD_DEFAULTS: dict[str, Any] = {
+    "ideology": "",
+    "founded_year": None,
+    "motto": "",
+    "description": "",
+    "color": "#C2A14D",
+    "created_at": None,
+}
 
 # One lock per debate id, lazily created. Protects per-debate file writes.
 _debate_locks: dict[str, asyncio.Lock] = {}
@@ -73,6 +143,8 @@ def ensure_seeded() -> None:
     if not parties_file.exists():
         _atomic_write_json(parties_file, {"parties": _DEFAULT_PARTIES})
         log.info("seeded parties.json")
+    else:
+        _backfill_party_metadata()
 
     if not personas_dir.exists() or not any(personas_dir.glob("*/*.json")):
         source = REPO_ROOT / "src" / "agents" / "data"
@@ -87,6 +159,46 @@ def ensure_seeded() -> None:
             log.info("seeded personas/ from src/agents/data/")
         else:
             log.warning("seed source missing: %s", source)
+
+
+def _backfill_party_metadata() -> None:
+    """Bring an older parties.json up to the current schema in place.
+
+    For each registered party:
+      1. Apply hand-written metadata if we ship a fallback for that id
+         (libertarian, green).
+      2. Otherwise, fill missing scalar fields with `_PARTY_FIELD_DEFAULTS`.
+    The file is only rewritten if any field actually changed.
+    """
+    parties_file = _parties_file()
+    if not parties_file.exists():
+        return
+    with parties_file.open("r", encoding="utf-8") as f:
+        data = json.load(f)
+    entries = data.get("parties", [])
+    by_id = {e["id"]: e for e in _DEFAULT_PARTIES}
+    changed = False
+    for entry in entries:
+        before = dict(entry)
+        pid = entry["id"]
+        # Apply hand-written defaults when we ship one.
+        canonical = by_id.get(pid) or _PARTY_FALLBACK_META.get(pid)
+        if canonical:
+            for k, v in canonical.items():
+                if not entry.get(k):
+                    entry[k] = v
+        # Then ensure every required scalar exists.
+        for k, default in _PARTY_FIELD_DEFAULTS.items():
+            if k not in entry:
+                entry[k] = default
+        if entry.get("created_at") is None:
+            from datetime import datetime, timezone
+            entry["created_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        if entry != before:
+            changed = True
+    if changed:
+        _atomic_write_json(parties_file, {"parties": entries})
+        log.info("backfilled parties.json metadata")
 
 
 # ---------------------------------------------------------------------------
@@ -225,15 +337,17 @@ def delete_persona(persona_id: str, *, force: bool = False) -> bool:
 # Parties
 # ---------------------------------------------------------------------------
 
-def list_parties() -> list[dict[str, Any]]:
-    """Return party registry, with seat counts derived from persona files."""
+def _read_parties_file() -> list[dict[str, Any]]:
     parties_file = _parties_file()
     if parties_file.exists():
         with parties_file.open("r", encoding="utf-8") as f:
-            registry = json.load(f).get("parties", [])
-    else:
-        registry = list(_DEFAULT_PARTIES)
+            return json.load(f).get("parties", [])
+    return list(_DEFAULT_PARTIES)
 
+
+def list_parties() -> list[dict[str, Any]]:
+    """Return party registry, with seat counts derived from persona files."""
+    registry = _read_parties_file()
     personas_root = _personas_dir()
     out: list[dict[str, Any]] = []
     for entry in registry:
@@ -245,23 +359,98 @@ def list_parties() -> list[dict[str, Any]]:
     return out
 
 
+def get_party(party_id: str) -> dict[str, Any] | None:
+    """Single party record with derived seat count, or None."""
+    for entry in list_parties():
+        if entry["id"] == party_id:
+            return entry
+    return None
+
+
 def save_party(party: dict[str, Any]) -> dict[str, Any]:
-    """Add a new party to the registry (or update an existing one)."""
+    """Add or replace a party in the registry. Fills in defaults for missing
+    metadata fields and stamps `created_at` if unset."""
     required = {"id", "label", "color"}
     if not required.issubset(party):
         missing = required - set(party)
         raise ValueError(f"party missing fields: {sorted(missing)}")
-    parties_file = _parties_file()
-    parties = []
-    if parties_file.exists():
-        with parties_file.open("r", encoding="utf-8") as f:
-            parties = json.load(f).get("parties", [])
-    parties = [p for p in parties if p["id"] != party["id"]]
-    parties.append({"id": party["id"], "label": party["label"], "color": party["color"]})
-    _atomic_write_json(parties_file, {"parties": parties})
+    pid = party["id"].strip()
+    if not pid:
+        raise ValueError("party id cannot be empty")
+    if not pid.replace("_", "").isalnum():
+        raise ValueError(
+            f"party id {pid!r} must be alphanumeric with underscores only"
+        )
+    parties = _read_parties_file()
+    existing = next((p for p in parties if p["id"] == pid), None)
+    payload: dict[str, Any] = dict(existing or {})
+    for k, default in _PARTY_FIELD_DEFAULTS.items():
+        payload.setdefault(k, default)
+    payload.update({k: v for k, v in party.items() if v is not None})
+    payload["id"] = pid
+    if not payload.get("created_at"):
+        from datetime import datetime, timezone
+        payload["created_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    parties = [p for p in parties if p["id"] != pid]
+    parties.append(payload)
+    _atomic_write_json(_parties_file(), {"parties": parties})
     # Make sure the persona dir exists so new personas can be saved there.
-    (_personas_dir() / party["id"]).mkdir(parents=True, exist_ok=True)
-    return {**party, "seats": 0}
+    (_personas_dir() / pid).mkdir(parents=True, exist_ok=True)
+    seats = sum(1 for _ in (_personas_dir() / pid).glob("*.json"))
+    return {**payload, "seats": seats}
+
+
+def update_party(party_id: str, patch: dict[str, Any]) -> dict[str, Any]:
+    """Partial update — merge new fields into the existing record."""
+    parties = _read_parties_file()
+    target = next((p for p in parties if p["id"] == party_id), None)
+    if target is None:
+        raise KeyError(party_id)
+    # 'id' is immutable.
+    patch = {k: v for k, v in patch.items() if k != "id"}
+    merged = {**target, **patch}
+    return save_party(merged)
+
+
+def delete_party(party_id: str, *, force: bool = False) -> bool:
+    """Remove a party. Rejects if any persona is still seated there unless
+    `force=True` (which also deletes the personas). Returns False if not
+    found. The two ground-truth parties cannot be deleted."""
+    if party_id in {"democrat", "republican"}:
+        raise ValueError(
+            f"the {party_id!r} caucus is part of the seeded chamber and cannot be removed"
+        )
+    parties = _read_parties_file()
+    target = next((p for p in parties if p["id"] == party_id), None)
+    if target is None:
+        return False
+    party_dir = _personas_dir() / party_id
+    seated = sorted(party_dir.glob("*.json")) if party_dir.is_dir() else []
+    if seated and not force:
+        ids = ", ".join(p.stem for p in seated)
+        raise ValueError(
+            f"party {party_id!r} still has seated personas: {ids}"
+        )
+    if force:
+        # Cascade-delete personas in the party. Other-party references to
+        # them get stripped too.
+        for f in seated:
+            try:
+                pid = f.stem
+            except Exception:
+                continue
+            try:
+                delete_persona(pid, force=True)
+            except Exception as e:
+                log.warning("failed to delete persona %s during party cascade: %s", pid, e)
+    if party_dir.is_dir() and not any(party_dir.iterdir()):
+        try:
+            party_dir.rmdir()
+        except OSError:
+            pass
+    parties = [p for p in parties if p["id"] != party_id]
+    _atomic_write_json(_parties_file(), {"parties": parties})
+    return True
 
 
 # ---------------------------------------------------------------------------
