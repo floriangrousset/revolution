@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { DebateDetail } from "../api";
 import { api } from "../api";
 import { Avatar } from "../components/Avatar";
@@ -18,7 +18,7 @@ interface ResultsProps {
   param?: string;
 }
 
-type Tab = "breakdown" | "timeline" | "transcript" | "amendments";
+type Tab = "overview" | "breakdown" | "timeline" | "transcript" | "amendments";
 
 const PHASE_LABEL: Record<string, string> = {
   intro: "Opening Remarks",
@@ -34,26 +34,52 @@ export function Results({ nav, param }: ResultsProps) {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [votes, setVotes] = useState<VoteRecord[]>([]);
   const [amendments, setAmendments] = useState<Amendment[]>([]);
-  const [tab, setTab] = useState<Tab>("breakdown");
+  const [tab, setTab] = useState<Tab>("overview");
   const [error, setError] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
 
+  // Initial fetch + auto-refresh while the debate is still running.
   useEffect(() => {
     if (!id) return;
     setError(null);
-    Promise.all([
-      api.getDebate(id),
-      api.getTranscript(id),
-      api.getVotes(id),
-      api.getAmendments(id),
-    ])
-      .then(([d, t, v, a]) => {
+    let cancelled = false;
+    const fetchAll = async (): Promise<DebateDetail | null> => {
+      try {
+        const [d, t, v, a] = await Promise.all([
+          api.getDebate(id),
+          api.getTranscript(id),
+          api.getVotes(id),
+          api.getAmendments(id),
+        ]);
+        if (cancelled) return null;
         setDebate(d);
         setTurns(t.turns);
         setVotes(v.votes);
         setAmendments(a.amendments);
-      })
-      .catch((e) => setError(String(e.message || e)));
+        return d;
+      } catch (e) {
+        if (!cancelled) setError(String((e as Error).message || e));
+        return null;
+      }
+    };
+    let timer: ReturnType<typeof setInterval> | null = null;
+    void fetchAll().then((d) => {
+      if (!d) return;
+      if (d.status === "running" || d.status === "pending") {
+        timer = setInterval(() => {
+          void fetchAll().then((next) => {
+            if (next && next.status !== "running" && next.status !== "pending" && timer) {
+              clearInterval(timer);
+              timer = null;
+            }
+          });
+        }, 5000);
+      }
+    });
+    return () => {
+      cancelled = true;
+      if (timer) clearInterval(timer);
+    };
   }, [id]);
 
   if (!id) {
@@ -85,6 +111,7 @@ export function Results({ nav, param }: ResultsProps) {
   const changes = votes.filter((v) => v.changed);
 
   const TABS: { id: Tab; label: string; icon: string; badge?: number }[] = [
+    { id: "overview", label: "Overview", icon: "dashboard" },
     { id: "breakdown", label: "Vote Breakdown", icon: "results" },
     { id: "timeline", label: "Persuasion Timeline", icon: "refresh", badge: changes.length },
     { id: "transcript", label: "Transcript", icon: "transcript" },
@@ -232,6 +259,9 @@ export function Results({ nav, param }: ResultsProps) {
         ))}
       </div>
 
+      {tab === "overview" && (
+        <Overview debate={debate} turns={turns} votes={votes} amendments={amendments} nav={nav} />
+      )}
       {tab === "breakdown" && <Breakdown votes={votes} />}
       {tab === "timeline" && <Timeline changes={changes} />}
       {tab === "transcript" && <FullTranscript turns={turns} debate={debate} nav={nav} />}
@@ -246,6 +276,555 @@ export function Results({ nav, param }: ResultsProps) {
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Overview — at-a-glance live dashboard of the debate's state.
+// ---------------------------------------------------------------------------
+
+const PHASE_ORDER: { key: string; label: string; expected: (d: DebateDetail) => number }[] = [
+  { key: "intro", label: "Opening Remarks", expected: () => 2 },
+  { key: "advisor_discussion", label: "Caucus Analysis", expected: () => 8 },
+  { key: "assistant_research", label: "Staff Research", expected: () => 12 },
+  { key: "synthesis", label: "Position Synthesis", expected: () => 2 },
+  {
+    key: "cross_party_debate",
+    label: "Cross-Party Debate",
+    // Roughly a half-dozen turns per round (party heads + advisors).
+    expected: (d) => Math.max(6, d.config.max_rounds * 4),
+  },
+  { key: "final_voting", label: "Final Vote", expected: () => 22 },
+];
+
+function Overview({
+  debate,
+  turns,
+  votes,
+  amendments,
+  nav,
+}: {
+  debate: DebateDetail;
+  turns: Turn[];
+  votes: VoteRecord[];
+  amendments: Amendment[];
+  nav: ResultsProps["nav"];
+}) {
+  const isLive = debate.status === "running" || debate.status === "pending";
+  const speakerTurns = useMemo(() => turns.filter((t) => t.agent !== "system"), [turns]);
+  const turnsByPhase = useMemo(() => {
+    const m: Record<string, Turn[]> = {};
+    for (const t of speakerTurns) {
+      (m[t.phase] = m[t.phase] || []).push(t);
+    }
+    return m;
+  }, [speakerTurns]);
+
+  const totalDelivered = speakerTurns.length;
+  const totalExpected =
+    PHASE_ORDER.reduce((acc, ph) => acc + ph.expected(debate), 0) - 22; // expected speech turns (excl. votes)
+  const currentPhase = (() => {
+    // The "active" phase is the one whose count is still below expected.
+    for (const ph of PHASE_ORDER) {
+      if (ph.key === "final_voting") continue;
+      const done = (turnsByPhase[ph.key] || []).length;
+      const expected = ph.expected(debate);
+      if (done < expected) return ph.key;
+    }
+    return "final_voting";
+  })();
+  const currentPhaseLabel =
+    PHASE_ORDER.find((p) => p.key === currentPhase)?.label || currentPhase;
+
+  const elapsed = useMemo(() => {
+    if (debate.duration_s != null) return debate.duration_s;
+    const t0 = new Date(debate.created_at).getTime();
+    return Math.max(0, Math.floor((Date.now() - t0) / 1000));
+  }, [debate.created_at, debate.duration_s]);
+
+  const persuasionCount = votes.filter((v) => v.changed).length;
+  const tally = debate.tally;
+
+  return (
+    <div style={{ display: "grid", gap: 22 }}>
+      {/* Top stat tiles ------------------------------------------------- */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4, 1fr)",
+          gap: 14,
+        }}
+      >
+        <StatTile
+          label="Current phase"
+          value={isLive ? currentPhaseLabel : "Resolved"}
+          accent={isLive ? "var(--gold-bright)" : "var(--pass)"}
+          icon={isLive ? "clock" : "check"}
+        />
+        <StatTile
+          label="Turns delivered"
+          value={`${totalDelivered}`}
+          sub={`of ~${totalExpected} expected`}
+          icon="transcript"
+        />
+        <StatTile
+          label="Votes cast"
+          value={`${votes.length}`}
+          sub={`of ${debate.config.parties.length * 11} agents`}
+          icon="vote"
+          accent={votes.length > 0 ? "var(--gold-bright)" : undefined}
+        />
+        <StatTile
+          label="Runtime"
+          value={fmtDuration(elapsed)}
+          sub={isLive ? "ticking…" : `model ${debate.config.model}`}
+          icon="bolt"
+        />
+      </div>
+
+      {/* Middle row: phase progress + tally / persuasion ----------------- */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 22 }}>
+        <Card pad={22}>
+          <div className="eyebrow" style={{ marginBottom: 16 }}>
+            Deliberation progress
+          </div>
+          <div style={{ display: "grid", gap: 12 }}>
+            {PHASE_ORDER.map((ph) => {
+              const done =
+                ph.key === "final_voting" ? votes.length : (turnsByPhase[ph.key] || []).length;
+              const expected = ph.expected(debate);
+              const active = ph.key === currentPhase && isLive;
+              const complete = done >= expected;
+              const pct = Math.min(100, Math.round((done / Math.max(1, expected)) * 100));
+              return (
+                <div key={ph.key}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontSize: 13,
+                      marginBottom: 5,
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: active
+                          ? "var(--gold-bright)"
+                          : complete
+                            ? "var(--txt)"
+                            : "var(--txt-mute)",
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: active
+                            ? "var(--gold-bright)"
+                            : complete
+                              ? "var(--pass)"
+                              : "var(--ink-line)",
+                          boxShadow: active ? "0 0 8px var(--gold-bright)" : "none",
+                          animation: active ? "blink 1.4s step-end infinite" : "none",
+                        }}
+                      />
+                      {ph.label}
+                    </span>
+                    <span
+                      className="mono"
+                      style={{ color: "var(--txt-faint)", fontSize: 11.5 }}
+                    >
+                      {done}/{expected}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      height: 4,
+                      borderRadius: 999,
+                      background: "var(--ink)",
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: `${pct}%`,
+                        height: "100%",
+                        background: active
+                          ? "linear-gradient(90deg, var(--gold), var(--gold-bright))"
+                          : complete
+                            ? "var(--pass)"
+                            : "var(--ink-line)",
+                        transition: "width .3s ease",
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        <div style={{ display: "grid", gap: 22 }}>
+          <Card pad={22}>
+            <div className="eyebrow" style={{ marginBottom: 14 }}>
+              Live tally
+            </div>
+            {votes.length === 0 ? (
+              <div
+                style={{
+                  color: "var(--txt-faint)",
+                  fontSize: 13,
+                  padding: "20px 0",
+                  textAlign: "center",
+                  lineHeight: 1.5,
+                }}
+              >
+                {isLive ? "Voting hasn't begun." : "No votes recorded."}
+                <div style={{ fontSize: 11.5, marginTop: 6 }}>
+                  Final tallies appear as the chamber votes.
+                </div>
+              </div>
+            ) : (
+              <>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: 12,
+                    marginBottom: 9,
+                    fontWeight: 600,
+                  }}
+                >
+                  <span style={{ color: "var(--support)" }}>{tally.support} For</span>
+                  <span style={{ color: "var(--abstain)" }}>{tally.abstain} Abstain</span>
+                  <span style={{ color: "var(--oppose)" }}>{tally.oppose} Against</span>
+                </div>
+                <TallyBar
+                  support={tally.support}
+                  oppose={tally.oppose}
+                  abstain={tally.abstain}
+                  height={12}
+                />
+                <div
+                  style={{
+                    marginTop: 14,
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    fontSize: 12,
+                    color: "var(--txt-mute)",
+                  }}
+                >
+                  <span>Persuasion shifts</span>
+                  <span
+                    style={{
+                      color: persuasionCount > 0 ? "var(--gold-bright)" : "var(--txt-faint)",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {persuasionCount} flipped
+                  </span>
+                </div>
+              </>
+            )}
+          </Card>
+
+          <Card pad={22}>
+            <div className="eyebrow" style={{ marginBottom: 14 }}>
+              Caucus split
+            </div>
+            <CaucusBars votes={votes} debate={debate} />
+          </Card>
+        </div>
+      </div>
+
+      {/* Recent activity feed ------------------------------------------- */}
+      <Card pad={22}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 14,
+          }}
+        >
+          <div className="eyebrow">Recent activity</div>
+          {isLive && (
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                fontSize: 11,
+                color: "var(--gold-bright)",
+                fontWeight: 700,
+                letterSpacing: ".1em",
+                textTransform: "uppercase",
+              }}
+            >
+              <span
+                style={{
+                  width: 7,
+                  height: 7,
+                  borderRadius: "50%",
+                  background: "var(--gold-bright)",
+                  animation: "blink 1.4s step-end infinite",
+                }}
+              />
+              Live
+            </span>
+          )}
+        </div>
+        {speakerTurns.length === 0 ? (
+          <div
+            style={{
+              color: "var(--txt-faint)",
+              fontSize: 13,
+              padding: "24px 0",
+              textAlign: "center",
+            }}
+          >
+            The chamber hasn't spoken yet.
+          </div>
+        ) : (
+          <div style={{ display: "grid", gap: 12 }}>
+            {speakerTurns.slice(-5).reverse().map((t) => (
+              <RecentTurn key={t.id} t={t} />
+            ))}
+          </div>
+        )}
+        <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end", gap: 10 }}>
+          {isLive && (
+            <Btn kind="ghost" iconR="arrowR" onClick={() => nav("arena", debate.id)}>
+              Watch in the arena
+            </Btn>
+          )}
+        </div>
+      </Card>
+
+      {/* Amendments preview --------------------------------------------- */}
+      {amendments.length > 0 && (
+        <Card pad={22}>
+          <div className="eyebrow" style={{ marginBottom: 14 }}>
+            Amendments ({amendments.length})
+          </div>
+          <div style={{ display: "grid", gap: 10 }}>
+            {amendments.slice(0, 3).map((a, i) => (
+              <div
+                key={a.id}
+                style={{
+                  display: "flex",
+                  gap: 14,
+                  alignItems: "center",
+                  padding: "10px 12px",
+                  borderRadius: "var(--r-md)",
+                  background: "var(--ink)",
+                  border: "1px solid var(--ink-line)",
+                }}
+              >
+                <span
+                  className="serif"
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: "var(--gold-deep)",
+                    width: 22,
+                  }}
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <p
+                  style={{
+                    flex: 1,
+                    fontSize: 13,
+                    margin: 0,
+                    color: "var(--txt-mute)",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {a.text}
+                </p>
+                <StatusTag status={a.status} />
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function StatTile({
+  label,
+  value,
+  sub,
+  accent,
+  icon,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: string;
+  icon: string;
+}) {
+  return (
+    <Card pad={18}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          color: "var(--txt-faint)",
+          fontSize: 10.5,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: ".12em",
+          marginBottom: 10,
+        }}
+      >
+        <Icon name={icon} size={12} style={{ color: "var(--gold)" }} />
+        {label}
+      </div>
+      <div
+        className="serif"
+        style={{
+          fontSize: 22,
+          fontWeight: 600,
+          color: accent || "var(--txt)",
+          lineHeight: 1.1,
+        }}
+      >
+        {value}
+      </div>
+      {sub && (
+        <div style={{ fontSize: 11.5, color: "var(--txt-faint)", marginTop: 6 }}>{sub}</div>
+      )}
+    </Card>
+  );
+}
+
+function CaucusBars({ votes, debate }: { votes: VoteRecord[]; debate: DebateDetail }) {
+  const parties = debate.config.parties.length > 0 ? debate.config.parties : ["democrat", "republican"];
+  return (
+    <div style={{ display: "grid", gap: 14 }}>
+      {parties.map((party) => {
+        const list = votes.filter((v) => v.party === party);
+        const t = { support: 0, oppose: 0, abstain: 0 };
+        list.forEach((v) => t[v.vote]++);
+        const seated = 11; // engine ships 11 per ground-truth party
+        return (
+          <div key={party}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: 12.5,
+                marginBottom: 6,
+              }}
+            >
+              <span style={{ color: partyBright(party), fontWeight: 600 }}>
+                {partyLabel(party)}
+              </span>
+              <span className="mono" style={{ color: "var(--txt-faint)", fontSize: 11 }}>
+                {list.length}/{seated}
+              </span>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                height: 8,
+                borderRadius: 999,
+                overflow: "hidden",
+                background: "var(--ink)",
+              }}
+            >
+              <div
+                style={{
+                  width: `${(t.support / seated) * 100}%`,
+                  background: "var(--support)",
+                }}
+              />
+              <div
+                style={{
+                  width: `${(t.abstain / seated) * 100}%`,
+                  background: "var(--abstain)",
+                }}
+              />
+              <div
+                style={{
+                  width: `${(t.oppose / seated) * 100}%`,
+                  background: "var(--oppose)",
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function RecentTurn({ t }: { t: Turn }) {
+  const [p, setP] = useState<Persona | null>(null);
+  useEffect(() => {
+    void api.getPersona(t.agent).then(setP).catch(() => null);
+  }, [t.agent]);
+  if (!p) return null;
+  const snippet = t.content.length > 220 ? t.content.slice(0, 220).trim() + "…" : t.content;
+  return (
+    <div style={{ display: "flex", gap: 12 }}>
+      <Avatar p={p} size={36} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+          <span
+            className="serif"
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: partyBright(p.party),
+              whiteSpace: "nowrap",
+            }}
+          >
+            {p.name}
+          </span>
+          <PartyTag party={p.party} size="sm" />
+          <span
+            style={{
+              fontSize: 11,
+              color: "var(--txt-faint)",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {PHASE_LABEL[t.phase] || t.phase}
+          </span>
+        </div>
+        <p
+          style={{
+            fontSize: 12.5,
+            color: "var(--txt-mute)",
+            margin: 0,
+            lineHeight: 1.55,
+          }}
+        >
+          {snippet}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function fmtDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m === 0) return `${s}s`;
+  return `${m}m ${String(s).padStart(2, "0")}s`;
+}
+
+// ---------------------------------------------------------------------------
 
 function Breakdown({ votes }: { votes: VoteRecord[] }) {
   const grouped = votes.reduce<Record<string, VoteRecord[]>>((acc, v) => {
