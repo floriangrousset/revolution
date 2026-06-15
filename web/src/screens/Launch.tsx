@@ -90,7 +90,7 @@ export function Launch({ nav }: LaunchProps) {
         temperature: temp,
         parties: chosenParties,
       });
-      nav("arena", resp.id);
+      nav("results", resp.id);
     } catch (e) {
       setError((e as Error).message || String(e));
     } finally {

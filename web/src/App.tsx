@@ -3,7 +3,6 @@ import { api } from "./api";
 import { DisclaimerBar } from "./components/DisclaimerBar";
 import { Sidebar } from "./components/Sidebar";
 import { useHashRoute } from "./hooks";
-import { Arena } from "./screens/Arena";
 import { Dashboard } from "./screens/Dashboard";
 import { Graph } from "./screens/Graph";
 import { Launch } from "./screens/Launch";
@@ -23,6 +22,12 @@ export function App() {
       });
   }, []);
 
+  // Legacy `#/arena/{id}` → redirect to the Results page (Overview tab now
+  // hosts the live chamber visualization). Existing bookmarks keep working.
+  useEffect(() => {
+    if (route === "arena" && param) nav("results", param);
+  }, [route, param, nav]);
+
   let Screen;
   switch (route) {
     case "personas":
@@ -32,7 +37,8 @@ export function App() {
       Screen = <Launch nav={nav} />;
       break;
     case "arena":
-      Screen = <Arena nav={nav} param={param} />;
+      // Redirect-in-flight; render nothing for one tick.
+      Screen = null;
       break;
     case "results":
       Screen = <Results nav={nav} param={param} />;
@@ -44,15 +50,11 @@ export function App() {
       Screen = <Dashboard nav={nav} />;
   }
 
-  const fullBleed = route === "arena";
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       <Sidebar route={route} nav={nav} model={model} />
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-        <div
-          id="screen"
-          style={{ flex: 1, minHeight: 0, overflow: fullBleed ? "hidden" : "auto" }}
-        >
+        <div id="screen" style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
           {Screen}
         </div>
         <DisclaimerBar />
