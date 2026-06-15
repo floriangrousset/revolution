@@ -2,11 +2,49 @@
    /api proxy (vite.config.ts) forwards them to the FastAPI server. */
 
 import type {
+  Amendment,
+  DebateSummary,
   Persona,
   PersonaSummary,
   PartyEntry,
   RelationshipGraph,
+  Turn,
+  VoteRecord,
 } from "./types";
+
+export interface DebateDetail {
+  id: string;
+  title: string;
+  proposal: string;
+  config: {
+    max_rounds: number;
+    model: string;
+    temperature: number;
+    parties: string[];
+  };
+  status: DebateSummary["status"];
+  result: string | null;
+  tally: { support: number; oppose: number; abstain: number };
+  created_at: string;
+  completed_at: string | null;
+  duration_s?: number;
+  error?: string;
+}
+
+export interface CreateDebateRequest {
+  proposal: string;
+  title?: string;
+  max_rounds: number;
+  model: string;
+  temperature: number;
+  parties?: string[];
+}
+
+export interface CreateDebateResponse {
+  id: string;
+  status: "running";
+  stream: string;
+}
 
 class ApiError extends Error {
   status: number;
@@ -64,6 +102,19 @@ export const api = {
 
   // relationships
   getRelationships: () => request<RelationshipGraph>("/api/relationships"),
+
+  // debates
+  listDebates: () => request<{ debates: DebateSummary[] }>("/api/debates"),
+  getDebate: (id: string) => request<DebateDetail>(`/api/debates/${id}`),
+  createDebate: (body: CreateDebateRequest) =>
+    request<CreateDebateResponse>("/api/debates", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getTranscript: (id: string) => request<{ turns: Turn[] }>(`/api/debates/${id}/transcript`),
+  getVotes: (id: string) => request<{ votes: VoteRecord[] }>(`/api/debates/${id}/votes`),
+  getAmendments: (id: string) =>
+    request<{ amendments: Amendment[] }>(`/api/debates/${id}/amendments`),
 };
 
 export { ApiError };

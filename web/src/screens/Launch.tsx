@@ -1,0 +1,470 @@
+import { useEffect, useState } from "react";
+import { api } from "../api";
+import { Btn } from "../components/Btn";
+import { Card, SectionTitle } from "../components/Card";
+import { TextArea } from "../components/Form";
+import { Icon } from "../components/Icon";
+import { Pill } from "../components/Tags";
+import { T, partyBright, partyColor, partyLabel, partyWash } from "../theme";
+import type { PartyEntry } from "../types";
+
+interface LaunchProps {
+  nav: (route: string, param?: string) => void;
+}
+
+const SAMPLES = [
+  "Should the federal minimum wage be raised to $17/hour?",
+  "Should the United States adopt a single-payer Medicare for All system?",
+  "Should Congress impose 12-year term limits via constitutional amendment?",
+  "Should we implement a federal universal basic income of $1,200/month?",
+  "Should the U.S. adopt a Green New Deal framework targeting net-zero by 2040?",
+];
+
+interface ModelOption {
+  id: string;
+  name: string;
+  tag: string;
+  note: string;
+  cost: string;
+}
+
+const MODELS: ModelOption[] = [
+  {
+    id: "claude-opus-4-5-20250514",
+    name: "Claude Opus 4.5",
+    tag: "Highest fidelity",
+    note: "Richest reasoning; recommended for nuanced debate.",
+    cost: "~$0.90 / debate",
+  },
+  {
+    id: "claude-sonnet-4-5",
+    name: "Claude Sonnet 4.5",
+    tag: "Balanced",
+    note: "Fast and cost-efficient; great default.",
+    cost: "~$0.22 / debate",
+  },
+  {
+    id: "claude-haiku-4-5-20251001",
+    name: "Claude Haiku 4.5",
+    tag: "Fastest",
+    note: "Quick simulations and dry runs.",
+    cost: "~$0.06 / debate",
+  },
+];
+
+export function Launch({ nav }: LaunchProps) {
+  const [text, setText] = useState("");
+  const [rounds, setRounds] = useState(2);
+  const [model, setModel] = useState(MODELS[0].id);
+  const [temp, setTemp] = useState(0.8);
+  const [parties, setParties] = useState<Record<string, boolean>>({
+    democrat: true,
+    republican: true,
+  });
+  const [allParties, setAllParties] = useState<PartyEntry[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void api.listParties().then((r) => setAllParties(r.parties));
+  }, []);
+
+  const m = MODELS.find((x) => x.id === model)!;
+  const apiCalls = 24 + rounds * 6;
+
+  const submit = async () => {
+    setError(null);
+    if (!text.trim()) {
+      setError("Enter a motion to begin.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const chosenParties = Object.entries(parties)
+        .filter(([, on]) => on)
+        .map(([k]) => k);
+      const resp = await api.createDebate({
+        proposal: text.trim(),
+        max_rounds: rounds,
+        model,
+        temperature: temp,
+        parties: chosenParties,
+      });
+      nav("arena", resp.id);
+    } catch (e) {
+      setError((e as Error).message || String(e));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 1080, margin: "0 auto", padding: "34px 40px 60px" }}>
+      <SectionTitle
+        eyebrow="Convene the Floor"
+        title="Launch a Debate"
+        sub="Submit a proposal, set the terms of deliberation, and the chamber will form positions, debate across the aisle, and vote."
+      />
+
+      <div style={{ display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: 24 }}>
+        <div style={{ display: "grid", gap: 22 }}>
+          <Card pad={26}>
+            <div className="eyebrow" style={{ marginBottom: 14 }}>
+              The Motion
+            </div>
+            <TextArea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder="Resolved: that the United States shall…"
+              style={{
+                minHeight: 130,
+                fontSize: 16,
+                fontFamily: "var(--serif)",
+                lineHeight: 1.6,
+              }}
+            />
+            <div style={{ marginTop: 16 }}>
+              <div
+                style={{
+                  fontSize: 11.5,
+                  color: "var(--txt-faint)",
+                  letterSpacing: ".1em",
+                  textTransform: "uppercase",
+                  fontWeight: 600,
+                  marginBottom: 10,
+                }}
+              >
+                Or start from a sample
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 9 }}>
+                {SAMPLES.map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setText(s)}
+                    style={{
+                      padding: "8px 13px",
+                      borderRadius: 999,
+                      fontSize: 12.5,
+                      background: "var(--ink)",
+                      border: "1px solid var(--ink-line)",
+                      color: "var(--txt-mute)",
+                      textAlign: "left",
+                      transition: "all .15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "var(--gold-deep)";
+                      e.currentTarget.style.color = "var(--txt)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = "var(--ink-line)";
+                      e.currentTarget.style.color = "var(--txt-mute)";
+                    }}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          <Card pad={26}>
+            <div className="eyebrow" style={{ marginBottom: 18 }}>
+              Deliberation Terms
+            </div>
+            <div style={{ marginBottom: 24 }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 11,
+                }}
+              >
+                <span style={{ fontSize: 13.5, fontWeight: 600 }}>
+                  Cross-party debate rounds
+                </span>
+                <span className="mono" style={{ fontSize: 13, color: "var(--gold-bright)" }}>
+                  {rounds} round{rounds > 1 ? "s" : ""}
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                {[1, 2, 3, 4, 5].map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setRounds(r)}
+                    style={{
+                      flex: 1,
+                      padding: "12px 0",
+                      borderRadius: "var(--r-md)",
+                      fontWeight: 700,
+                      fontSize: 15,
+                      fontFamily: "var(--serif)",
+                      background:
+                        rounds === r
+                          ? "linear-gradient(180deg,var(--gold),var(--gold-deep))"
+                          : "var(--ink)",
+                      color: rounds === r ? "#1B1405" : "var(--txt-mute)",
+                      border: `1px solid ${rounds === r ? "var(--gold-deep)" : "var(--ink-line)"}`,
+                      transition: "all .15s ease",
+                    }}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--txt-faint)", marginTop: 10 }}>
+                More rounds mean deeper rebuttals and more opportunities for agents to change
+                their votes.
+              </div>
+            </div>
+
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 11,
+                }}
+              >
+                <span style={{ fontSize: 13.5, fontWeight: 600 }}>Temperature</span>
+                <span className="mono" style={{ fontSize: 13, color: "var(--gold-bright)" }}>
+                  {temp.toFixed(2)}
+                </span>
+              </div>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={temp}
+                onChange={(e) => setTemp(parseFloat(e.target.value))}
+                style={{ width: "100%", accentColor: T.gold }}
+              />
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: 11.5,
+                  color: "var(--txt-faint)",
+                  marginTop: 7,
+                }}
+              >
+                <span>Disciplined · on-message</span>
+                <span>Volatile · unpredictable</span>
+              </div>
+            </div>
+          </Card>
+
+          <Card pad={26}>
+            <div className="eyebrow" style={{ marginBottom: 16 }}>
+              Reasoning Model
+            </div>
+            <div style={{ display: "grid", gap: 11 }}>
+              {MODELS.map((mo) => (
+                <button
+                  key={mo.id}
+                  onClick={() => setModel(mo.id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 14,
+                    padding: "15px 17px",
+                    borderRadius: "var(--r-md)",
+                    textAlign: "left",
+                    background: model === mo.id ? "var(--ink3)" : "var(--ink)",
+                    border: `1px solid ${model === mo.id ? "var(--gold-deep)" : "var(--ink-line)"}`,
+                    transition: "all .15s ease",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: "50%",
+                      border: `2px solid ${model === mo.id ? "var(--gold-bright)" : "var(--ink-line)"}`,
+                      display: "grid",
+                      placeItems: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {model === mo.id && (
+                      <span
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: "var(--gold-bright)",
+                        }}
+                      />
+                    )}
+                  </span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                      <span style={{ fontSize: 14.5, fontWeight: 600, color: "var(--txt)" }}>
+                        {mo.name}
+                      </span>
+                      <Pill
+                        color="var(--gold-bright)"
+                        border="var(--gold-deep)"
+                        style={{ fontSize: 10 }}
+                      >
+                        {mo.tag}
+                      </Pill>
+                    </div>
+                    <div style={{ fontSize: 12.5, color: "var(--txt-mute)", marginTop: 3 }}>
+                      {mo.note}
+                    </div>
+                  </div>
+                  <span className="mono" style={{ fontSize: 12, color: "var(--txt-faint)" }}>
+                    {mo.cost}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </Card>
+        </div>
+
+        <div style={{ display: "grid", gap: 22, alignContent: "start", position: "sticky", top: 24 }}>
+          <Card pad={24}>
+            <div className="eyebrow" style={{ marginBottom: 16 }}>
+              Participating Caucuses
+            </div>
+            {allParties.map((p) => {
+              const on = parties[p.id] ?? false;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setParties((s) => ({ ...s, [p.id]: !s[p.id] }))}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 13,
+                    width: "100%",
+                    padding: "13px 14px",
+                    borderRadius: "var(--r-md)",
+                    marginBottom: 10,
+                    background: on ? partyWash(p.id) : "var(--ink)",
+                    border: `1px solid ${on ? partyColor(p.id) : "var(--ink-line)"}`,
+                    transition: "all .15s ease",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 9,
+                      height: 9,
+                      borderRadius: "50%",
+                      background: partyColor(p.id),
+                    }}
+                  />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: "var(--txt)" }}>
+                    {p.label || partyLabel(p.id)} ({p.seats})
+                  </span>
+                  <span style={{ marginLeft: "auto", color: on ? partyBright(p.id) : "var(--txt-faint)" }}>
+                    <Icon name={on ? "check" : "plus"} size={16} stroke={2.2} />
+                  </span>
+                </button>
+              );
+            })}
+            <div style={{ fontSize: 12, color: "var(--txt-faint)", marginTop: 6, lineHeight: 1.5 }}>
+              Custom parties you create in the Persona Manager will appear here automatically.
+              (Note: the engine currently runs the deliberation flow for democrat & republican
+              only.)
+            </div>
+          </Card>
+
+          <Card pad={24}>
+            <div className="eyebrow" style={{ marginBottom: 16 }}>
+              Session Forecast
+            </div>
+            <div style={{ display: "grid", gap: 14 }}>
+              <SummaryRow
+                label="Agents seated"
+                value={String(allParties.reduce((acc, p) => acc + p.seats, 0))}
+              />
+              <SummaryRow label="Reasoning model" value={m.name} />
+              <SummaryRow label="Debate rounds" value={rounds} />
+              <SummaryRow label="Est. API calls" value={`~${apiCalls}`} />
+              <SummaryRow label="Est. cost" value={m.cost} accent />
+              <SummaryRow label="Est. runtime" value={`${5 + rounds * 3}–${9 + rounds * 4} min`} />
+            </div>
+          </Card>
+
+          <Btn
+            kind="primary"
+            size="lg"
+            icon="launch"
+            full
+            disabled={!text.trim() || submitting}
+            onClick={submit}
+          >
+            {submitting ? "Convening…" : "Convene the Debate"}
+          </Btn>
+          {error && (
+            <div
+              style={{
+                padding: "10px 14px",
+                borderRadius: "var(--r-md)",
+                background: "rgba(192,57,43,0.12)",
+                border: "1px solid var(--reject)",
+                color: "var(--reject)",
+                fontSize: 13,
+              }}
+            >
+              {error}
+            </div>
+          )}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              alignItems: "flex-start",
+              fontSize: 11.5,
+              color: "var(--txt-faint)",
+              lineHeight: 1.5,
+            }}
+          >
+            <Icon
+              name="scale"
+              size={13}
+              style={{ color: "var(--gold)", flexShrink: 0, marginTop: 2 }}
+            />
+            This is a simulation. Outcomes model how AI personas reason — they are not predictions
+            of how any real body would vote.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SummaryRow({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string | number;
+  accent?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingBottom: 12,
+        borderBottom: "1px solid var(--ink-line-soft)",
+      }}
+    >
+      <span style={{ fontSize: 13, color: "var(--txt-mute)" }}>{label}</span>
+      <span
+        style={{
+          fontSize: 13.5,
+          fontWeight: 600,
+          color: accent ? "var(--gold-bright)" : "var(--txt)",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}

@@ -11,11 +11,8 @@ interface DashboardProps {
   nav: (route: string, param?: string) => void;
 }
 
-const PLACEHOLDER_DEBATES: DebateSummary[] = [];
-
 export function Dashboard({ nav }: DashboardProps) {
-  // M1 has no /api/debates endpoint yet — placeholder until M3.
-  const [debates, setDebates] = useState<DebateSummary[]>(PLACEHOLDER_DEBATES);
+  const [debates, setDebates] = useState<DebateSummary[]>([]);
   const [stats, setStats] = useState({ democrat: 0, republican: 0 });
 
   useEffect(() => {
@@ -26,11 +23,13 @@ export function Dashboard({ nav }: DashboardProps) {
       });
       setStats({ democrat: map.democrat || 0, republican: map.republican || 0 });
     });
+    void api.listDebates().then((r) => setDebates(r.debates)).catch(() => null);
   }, []);
 
   const passed = debates.filter((d) => d.status === "passed").length;
   const passRate = debates.length ? Math.round((passed / debates.length) * 100) : 0;
   const totalSeats = stats.democrat + stats.republican;
+  const totalAmendments = debates.reduce((acc, d) => acc + (d.amendments || 0), 0);
 
   return (
     <div style={{ maxWidth: 1180, margin: "0 auto", padding: "34px 40px 60px" }}>
@@ -147,8 +146,8 @@ export function Dashboard({ nav }: DashboardProps) {
       >
         <Stat value={debates.length} label="Debates Held" />
         <Stat value={`${passRate}%`} label="Passage Rate" color="var(--pass)" />
-        <Stat value={debates.length ? "—" : "—"} label="Amendments Tabled" color="var(--gold-bright)" />
-        <Stat value="—" label="Votes Flipped" color="var(--dem-bright)" sub="via persuasion" />
+        <Stat value={totalAmendments} label="Amendments Tabled" color="var(--gold-bright)" />
+        <Stat value={totalSeats} label="Agents Seated" color="var(--dem-bright)" />
       </div>
 
       <SectionTitle

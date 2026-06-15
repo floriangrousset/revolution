@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import db
-from .routers import parties, personas, relationships
+from .routers import debates, parties, personas, relationships
 from .settings import get_settings
 
 log = logging.getLogger(__name__)
@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
     app.include_router(personas.router)
     app.include_router(parties.router)
     app.include_router(relationships.router)
+    app.include_router(debates.router)
     return app
 
 

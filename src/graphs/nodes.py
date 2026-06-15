@@ -1,5 +1,6 @@
 """Node implementations for the negotiation graphs."""
 import os
+from contextvars import ContextVar
 from typing import Any, Literal
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage
@@ -18,6 +19,21 @@ from ..agents.prompts import (
     DEBATE_REBUTTAL_PROMPT,
 )
 
+# Per-run overrides for model and temperature. The CLI never touches these, so
+# they fall back to env / default. The FastAPI debate runner sets them before
+# kicking off `run_negotiation` so each debate honors the Launch screen's knobs
+# without rewriting every node signature.
+_model_override: ContextVar[str | None] = ContextVar("_model_override", default=None)
+_temperature_override: ContextVar[float | None] = ContextVar(
+    "_temperature_override", default=None
+)
+
+
+def set_model_overrides(*, model: str | None = None, temperature: float | None = None) -> None:
+    """Bind model/temperature for the current async task only."""
+    _model_override.set(model)
+    _temperature_override.set(temperature)
+
 
 def _content_text(response: BaseMessage) -> str:
     """Narrow a chat-model response's content to a string.
@@ -35,13 +51,25 @@ def _content_text(response: BaseMessage) -> str:
 
 
 def get_model() -> ChatAnthropic:
-    """Create the Claude model instance."""
+    """Create the Claude model instance.
+
+    Resolution order: per-run contextvar override → env var → default. Caller
+    can pin `model`/`temperature` per debate via `set_model_overrides()`.
+    """
     api_key = os.environ.get("ANTHROPIC_API_KEY") or ""
+    model_name = (
+        _model_override.get()
+        or os.environ.get("MODEL_NAME")
+        or "claude-opus-4-5-20250514"
+    )
+    temperature = _temperature_override.get()
+    if temperature is None:
+        temperature = 0.8
     return ChatAnthropic(
-        model_name=os.environ.get("MODEL_NAME", "claude-opus-4-5-20250514"),
+        model_name=model_name,
         api_key=SecretStr(api_key),
         max_tokens_to_sample=2048,
-        temperature=0.8,
+        temperature=temperature,
         timeout=None,
         stop=None,
     )
