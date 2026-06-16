@@ -8,7 +8,7 @@ import { Icon } from "../components/Icon";
 import { PostureTag, RoleTag } from "../components/Tags";
 import { ROLE_META } from "../meta";
 import { partyColor } from "../theme";
-import type { PersonaSummary, Role } from "../types";
+import type { PartyEntry, PersonaSummary, Role } from "../types";
 
 import { AddPersonaModal } from "./AddPersonaModal";
 import { PersonaDetail } from "./PersonaDetail";
@@ -27,6 +27,7 @@ export function Personas({ nav, param }: PersonasProps) {
 
 function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
   const [all, setAll] = useState<PersonaSummary[]>([]);
+  const [parties, setParties] = useState<PartyEntry[]>([]);
   const [q, setQ] = useState("");
   const [party, setParty] = useState<"all" | string>("all");
   const [role, setRole] = useState<"all" | Role>("all");
@@ -38,6 +39,7 @@ function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
       .listPersonas()
       .then((r) => setAll(r.personas))
       .catch((e) => setError(String(e.message || e)));
+    void api.listParties().then((r) => setParties(r.parties));
   };
 
   useEffect(refresh, []);
@@ -54,13 +56,18 @@ function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
     });
   }, [all, party, role, q]);
 
-  const dems = list.filter((p) => p.party === "democrat");
-  const reps = list.filter((p) => p.party === "republican");
-  const others = list.filter((p) => p.party !== "democrat" && p.party !== "republican");
-  const customByParty = others.reduce<Record<string, PersonaSummary[]>>((acc, p) => {
-    (acc[p.party] = acc[p.party] || []).push(p);
-    return acc;
-  }, {});
+  // Group the visible list into one bucket per party, preserving the
+  // registry's ordering so the two seeded caucuses always lead.
+  const grouped = useMemo(() => {
+    const map = new Map<string, PersonaSummary[]>();
+    parties.forEach((p) => map.set(p.id, []));
+    list.forEach((p) => {
+      if (!map.has(p.party)) map.set(p.party, []);
+      map.get(p.party)!.push(p);
+    });
+    return Array.from(map.entries());
+  }, [parties, list]);
+  const customPartyIds = parties.filter((p) => p.id !== "democrat" && p.id !== "republican");
 
   const FilterChip = ({
     active,
@@ -138,24 +145,24 @@ function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
             style={{ ...inputStyle, paddingLeft: 38 }}
           />
         </div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <FilterChip active={party === "all"} onClick={() => setParty("all")}>
             All
           </FilterChip>
-          <FilterChip
-            active={party === "democrat"}
-            color="var(--dem-bright)"
-            onClick={() => setParty("democrat")}
-          >
-            Democrat
-          </FilterChip>
-          <FilterChip
-            active={party === "republican"}
-            color="var(--rep-bright)"
-            onClick={() => setParty("republican")}
-          >
-            Republican
-          </FilterChip>
+          {parties.map((p) => (
+            <FilterChip
+              key={p.id}
+              active={party === p.id}
+              color={p.id === "democrat"
+                ? "var(--dem-bright)"
+                : p.id === "republican"
+                  ? "var(--rep-bright)"
+                  : p.color}
+              onClick={() => setParty(p.id)}
+            >
+              {p.label.replace(/Caucus|Conference/gi, "").trim() || p.id}
+            </FilterChip>
+          ))}
         </div>
         <div style={{ width: 1, height: 24, background: "var(--ink-line)" }} />
         <div style={{ display: "flex", gap: 8 }}>
@@ -167,22 +174,49 @@ function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 30 }}>
-        <Caucus title="Democratic Caucus" party="democrat" people={dems} nav={nav} />
-        <Caucus title="Republican Conference" party="republican" people={reps} nav={nav} />
-      </div>
-
-      {Object.keys(customByParty).length > 0 && (
-        <div style={{ marginTop: 36, display: "grid", gap: 30 }}>
-          {Object.entries(customByParty).map(([partyId, people]) => (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+          gap: 30,
+        }}
+      >
+        {grouped.map(([partyId, people]) => {
+          const meta = parties.find((p) => p.id === partyId);
+          const title =
+            meta?.label ||
+            (partyId === "democrat"
+              ? "Democratic Caucus"
+              : partyId === "republican"
+                ? "Republican Conference"
+                : `${partyId[0].toUpperCase()}${partyId.slice(1)} Caucus`);
+          return (
             <Caucus
               key={partyId}
-              title={`${partyId[0].toUpperCase()}${partyId.slice(1)} Caucus`}
+              title={title}
               party={partyId}
               people={people}
               nav={nav}
             />
-          ))}
+          );
+        })}
+      </div>
+
+      {customPartyIds.length > 0 && (
+        <div
+          style={{
+            marginTop: 24,
+            fontSize: 12,
+            color: "var(--txt-faint)",
+            textAlign: "center",
+            lineHeight: 1.5,
+          }}
+        >
+          {customPartyIds.length} custom caucus
+          {customPartyIds.length === 1 ? " is" : "es are"} registered. The engine
+          currently runs the deliberation flow for Democrats &amp; Republicans only;
+          custom caucuses appear in the registry and can hold personas, but their
+          members don't (yet) take the floor.
         </div>
       )}
 

@@ -60,7 +60,7 @@ def get_model() -> ChatAnthropic:
     model_name = (
         _model_override.get()
         or os.environ.get("MODEL_NAME")
-        or "claude-opus-4-5-20250514"
+        or "claude-sonnet-4-6"
     )
     temperature = _temperature_override.get()
     if temperature is None:

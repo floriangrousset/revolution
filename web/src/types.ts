@@ -55,6 +55,11 @@ export interface PartyEntry {
   label: string;
   color: string;
   seats: number;
+  description?: string;
+  ideology?: string;
+  founded_year?: number | null;
+  motto?: string;
+  created_at?: string | null;
 }
 
 export interface RelationshipNode {

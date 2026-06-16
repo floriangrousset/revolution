@@ -5,6 +5,19 @@ export interface Route {
   param?: string;
 }
 
+/** Subscribe to viewport width so components can swap layouts on the fly. */
+export function useWindowWidth(): number {
+  const [w, setW] = useState(() =>
+    typeof window === "undefined" ? 1200 : window.innerWidth,
+  );
+  useEffect(() => {
+    const on = () => setW(window.innerWidth);
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+  return w;
+}
+
 function parseHash(): Route {
   const h = (location.hash || "#/dashboard").replace(/^#\//, "");
   const [route, param] = h.split("/");

@@ -148,15 +148,74 @@ export function injectGlobal(): void {
   document.head.appendChild(s);
 }
 
+// Process-wide cache of the party registry. App.tsx hydrates it on boot via
+// setPartyRegistry(); every party color/label helper consults the cache first
+// so custom parties carry their own visual identity instead of falling back to
+// the Democrat blue.
+interface RegistryEntry {
+  id: string;
+  label: string;
+  color: string;
+}
+
+let PARTY_REGISTRY: RegistryEntry[] = [];
+
+export function setPartyRegistry(parties: RegistryEntry[]): void {
+  PARTY_REGISTRY = parties.map((p) => ({ id: p.id, label: p.label, color: p.color }));
+}
+
+function findParty(id: string): RegistryEntry | undefined {
+  return PARTY_REGISTRY.find((p) => p.id === id);
+}
+
+/** Convert a hex color (#RRGGBB) to an rgba() string with the given alpha. */
+function hexAlpha(hex: string, alpha: number): string {
+  const m = hex.trim().match(/^#?([0-9a-f]{6})$/i);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 0xff;
+  const g = (n >> 8) & 0xff;
+  const b = n & 0xff;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/** Brighten a hex color by mixing toward white. */
+function brighten(hex: string, amount = 0.32): string {
+  const m = hex.trim().match(/^#?([0-9a-f]{6})$/i);
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const mix = (c: number) => Math.round(c + (255 - c) * amount);
+  const r = mix((n >> 16) & 0xff);
+  const g = mix((n >> 8) & 0xff);
+  const b = mix(n & 0xff);
+  return `rgb(${r},${g},${b})`;
+}
+
 export function partyColor(party: string): string {
-  return party === "republican" ? "var(--rep)" : "var(--dem)";
+  if (party === "republican") return "var(--rep)";
+  if (party === "democrat") return "var(--dem)";
+  return findParty(party)?.color || "var(--gold)";
 }
+
 export function partyBright(party: string): string {
-  return party === "republican" ? "var(--rep-bright)" : "var(--dem-bright)";
+  if (party === "republican") return "var(--rep-bright)";
+  if (party === "democrat") return "var(--dem-bright)";
+  const base = findParty(party)?.color;
+  return base ? brighten(base) : "var(--gold-bright)";
 }
+
 export function partyWash(party: string): string {
-  return party === "republican" ? "var(--rep-wash)" : "var(--dem-wash)";
+  if (party === "republican") return "var(--rep-wash)";
+  if (party === "democrat") return "var(--dem-wash)";
+  const base = findParty(party)?.color;
+  return base ? hexAlpha(base, 0.14) : "rgba(194,161,77,0.12)";
 }
+
 export function partyLabel(party: string): string {
-  return party === "republican" ? "Republican" : "Democrat";
+  if (party === "republican") return "Republican";
+  if (party === "democrat") return "Democrat";
+  return (
+    findParty(party)?.label ||
+    party.charAt(0).toUpperCase() + party.slice(1)
+  );
 }

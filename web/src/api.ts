@@ -97,8 +97,16 @@ export const api = {
 
   // parties
   listParties: () => request<{ parties: PartyEntry[] }>("/api/parties"),
-  createParty: (body: { id: string; label: string; color: string }) =>
+  getParty: (id: string) => request<PartyEntry>(`/api/parties/${id}`),
+  createParty: (body: Partial<PartyEntry> & { id: string; label: string; color: string }) =>
     request<PartyEntry>("/api/parties", { method: "POST", body: JSON.stringify(body) }),
+  updateParty: (id: string, patch: Partial<PartyEntry>) =>
+    request<PartyEntry>(`/api/parties/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  deleteParty: (id: string, force = false) =>
+    request<void>(`/api/parties/${id}${force ? "?force=true" : ""}`, { method: "DELETE" }),
 
   // relationships
   getRelationships: () => request<RelationshipGraph>("/api/relationships"),

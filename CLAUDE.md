@@ -5,22 +5,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Run the negotiation system
+# Run the CLI negotiation system
 python -m src.main
 # Or, after `pip install -e .`:
 revolution
 
+# Run the web app (two terminals)
+python -m uvicorn server.main:app --reload          # backend, :8000
+#   or: revolution-server
+cd web && pnpm install && pnpm dev                  # frontend, :5173
+
 # Install dependencies
 pip install -r requirements.txt
+# Web app dev tooling (needs Node 22+ and pnpm via corepack):
+cd web && pnpm install
 
 # Set up environment
 cp .env.example .env
 # Add ANTHROPIC_API_KEY to .env
+# MODEL_NAME is a CLI fallback only — the web UI sets the model per-debate
 
 # Tests, lint, type-check (dev extras: pip install -e ".[dev]")
 pytest
 ruff check .
-mypy src
+mypy src server
+cd web && pnpm typecheck && pnpm build
 
 # Pre-commit hooks (runs ruff --fix on each commit)
 pip install pre-commit && pre-commit install
@@ -89,5 +98,44 @@ Nodes accept optional `display_callback` for real-time CLI output.
 - Graphs built with `StateGraph(TypedDict)` and compiled via `builder.compile()`
 - Async execution: `await graph.ainvoke(initial_state)`
 - All LLM calls use `ChatAnthropic` from langchain-anthropic
-- Model configured via `MODEL_NAME` env var (default: `claude-opus-4-5-20250514`, see `src/graphs/nodes.py`)
+- Model + temperature can be pinned **per debate** via contextvars in `src/graphs/nodes.py`. `run_negotiation(..., model=, temperature=)` calls `set_model_overrides()` before building the graph; `get_model()` resolves `_model_override → MODEL_NAME env → default ('claude-sonnet-4-6')`. The CLI never sets the contextvars, so it follows env/default; the web's `server/engine.run_debate` sets them from the debate config.
 - Requires Python 3.11+
+
+## Web Layer (server/ + web/ + data/)
+
+Added on top of the engine without rewriting it. The CLI continues to work unchanged.
+
+### `server/` — FastAPI shell
+
+- `main.py` — app factory, CORS, `load_dotenv()` *before* any router import so the engine's `os.environ` reads of `ANTHROPIC_API_KEY` succeed
+- `settings.py` — pydantic-settings: `ANTHROPIC_API_KEY`, `MODEL_NAME`, `DATA_DIR`, `CORS_ORIGINS`
+- `db.py` — file-DB access (atomic writes, per-debate `asyncio.Lock`s). Seeds `data/personas/` from `src/agents/data/` on first boot, and backfills `data/parties.json` metadata in place
+- `engine.py` — `run_debate(debate_id)` wraps `run_negotiation`. The `display_callback` is wired to **both** the persisted `transcript.jsonl` and the `events.broadcaster` for live SSE
+- `events.py` — `Event` dataclass + `EventBroadcaster` (per-debate queue, multi-subscriber)
+- `exporters.py` — PDF (reportlab), Markdown, JSON. Every export embeds the simulation disclaimer
+- `routers/` — `personas`, `parties`, `debates`, `stream` (SSE replay + tail)
+
+### `web/` — React + Vite + TypeScript
+
+- Lifted the prototype's design tokens + component library 1:1 into `web/src/{theme.ts,components/*}`
+- `theme.ts` has a process-wide party-color registry hydrated by `App.tsx` via `setPartyRegistry()`; custom parties (libertarian, green, …) carry their real color through every screen
+- Screens: Dashboard, Personas (+ Detail + AddPersonaModal), Parties (+ Detail), Launch, Results (Overview / Breakdown / Timeline / Transcript / Amendments + ExportModal), Graph
+- Live debate UX lives **inside** the Results page Overview tab — the chamber hemicycle, phase rail, and speaker spotlight. Polling refreshes every 5s while a debate runs; SSE `turn_start` drives the "Composing remarks…" live indicator
+- No `/arena` route — legacy `#/arena/{id}` URLs redirect to `#/results/{id}` (Overview tab is the default)
+
+### `data/` — runtime file DB (gitignored)
+
+| Path | Contents |
+|---|---|
+| `parties.json` | Registry: id, label, color, ideology, founded_year, motto, description, created_at |
+| `personas/<party>/*.json` | One Agent JSON per persona. Schema is identical to `src/agents/data/` |
+| `index.json` | Denormalized debate list (dashboard read path) |
+| `debates/<id>/debate.json` | Config + status + result + tally |
+| `debates/<id>/transcript.jsonl` | Append-only turns, written live via the `display_callback` |
+| `debates/<id>/votes.json` | Final vote roll-call (written at completion) |
+| `debates/<id>/amendments.json` | Amendments tabled by agents |
+
+### Multi-party notes
+
+- `data/parties.json` is the source of truth. Anything beyond `democrat` + `republican` is "custom" — UI surfaces it everywhere, but the LangGraph deliberation flow currently only knows the two seeded caucuses. Extending the flow to dynamic parties is a follow-up.
+- `Agent.party` was loosened from a closed `Literal` to a non-empty `str` (see `src/agents/base.py`) so custom-party personas validate. The parties registry decides which ids are recognized at the UI layer.
