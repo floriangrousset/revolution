@@ -33,7 +33,9 @@ class Vote:
     agent_id: str
     agent_name: str
     agent_role: str
-    party: Literal["republican", "democrat"]
+    # `party` is the persona's party id. Loosened from Literal to str in R2-C so
+    # custom caucuses (libertarian, green, …) can debate too.
+    party: str
     vote: Literal["support", "oppose", "abstain"]
     reasoning: str
     amendments: list[str] = field(default_factory=list)
@@ -70,9 +72,32 @@ def add_votes(left: list[Vote], right: list[Vote]) -> list[Vote]:
     return list(votes_dict.values())
 
 
+def merge_positions(
+    left: dict[str, Optional[str]], right: dict[str, Optional[str]]
+) -> dict[str, Optional[str]]:
+    """Reducer for `positions` — right wins per party."""
+    out = dict(left)
+    out.update(right)
+    return out
+
+
+def merge_votes_by_party(
+    left: dict[str, list[Vote]], right: dict[str, list[Vote]]
+) -> dict[str, list[Vote]]:
+    """Reducer for `votes_by_party` — per-party list gets the add_votes treatment."""
+    out: dict[str, list[Vote]] = {k: list(v) for k, v in left.items()}
+    for party, votes in right.items():
+        existing = {v.agent_id: v for v in out.get(party, [])}
+        for v in votes:
+            existing[v.agent_id] = v
+        out[party] = list(existing.values())
+    return out
+
+
 class PartyState(TypedDict):
     """State for party-level deliberation (subgraph)."""
-    party_name: Literal["republican", "democrat"]
+    # `party_name` is the party id (e.g. "democrat", "republican", "libertarian").
+    party_name: str
     proposal: Proposal
     discussion: Annotated[list[AgentMessage], add_messages]
     party_position: Optional[str]
@@ -81,24 +106,33 @@ class PartyState(TypedDict):
     phase: Literal["intro", "advisor_discussion", "assistant_research", "synthesis", "voting"]
 
 
-class NegotiationState(TypedDict):
-    """Main orchestration state for the full negotiation."""
+class NegotiationState(TypedDict, total=False):
+    """Main orchestration state for the full negotiation.
+
+    R2-C generalized this to support any 2+ participating parties via the
+    dict-keyed `positions` and `votes_by_party` fields. The legacy
+    `republican_*` / `democrat_*` fields are still populated when those two
+    parties are present, for backward-compat with CLI callers and tests
+    written against the M1–M5 shape.
+    """
     proposal: Proposal
     messages: Annotated[list[AgentMessage], add_messages]
     debate_transcript: Annotated[list[AgentMessage], add_messages]
+    # List of party ids participating in this negotiation, in seating order
+    # (left → right in the chamber). Set at run_negotiation() entry.
+    parties: list[str]
+    # Per-party synthesized position after deliberation.
+    positions: Annotated[dict[str, Optional[str]], merge_positions]
+    # Per-party agent votes — keyed by party id.
+    votes_by_party: Annotated[dict[str, list[Vote]], merge_votes_by_party]
+    # ---- Back-compat shims, populated when the relevant party is in `parties` ----
     republican_position: Optional[str]
     democrat_position: Optional[str]
     republican_votes: Annotated[list[Vote], add_votes]
     democrat_votes: Annotated[list[Vote], add_votes]
+    # ---------------------------------------------------------------------------
     negotiation_round: int
     max_rounds: int
-    phase: Literal[
-        "proposal_submission",
-        "republican_deliberation",
-        "democrat_deliberation",
-        "cross_party_debate",
-        "final_voting",
-        "resolution"
-    ]
+    phase: str
     final_result: Optional[Literal["passed", "rejected", "amended"]]
     amendments_proposed: list[str]

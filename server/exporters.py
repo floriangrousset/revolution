@@ -21,6 +21,8 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from . import db
+
 
 DISCLAIMER = (
     "Simulation. All personas are AI approximations of public political "
@@ -144,6 +146,25 @@ INK = colors.HexColor("#0A1626")
 INK_MUTE = colors.HexColor("#5A6478")
 DEM_BLUE = colors.HexColor("#2E5AA8")
 REP_RED = colors.HexColor("#C0392B")
+NEUTRAL_PARTY = colors.HexColor("#9A8C6B")
+
+
+def _party_color(party_id: str | None) -> colors.Color:
+    """Look up a party's color in the registry, with a neutral fallback so
+    custom parties get their configured palette in the PDF too."""
+    if not party_id:
+        return NEUTRAL_PARTY
+    try:
+        record = db.get_party(party_id)
+    except Exception:
+        record = None
+    raw = (record or {}).get("color")
+    if isinstance(raw, str) and raw.startswith("#") and len(raw) == 7:
+        try:
+            return colors.HexColor(raw)
+        except ValueError:
+            return NEUTRAL_PARTY
+    return NEUTRAL_PARTY
 PASS_GREEN = colors.HexColor("#3E9B6E")
 
 
@@ -280,7 +301,7 @@ def to_pdf(
                 )
                 last_phase = phase
             who = t.get("name") or t.get("agent", "?")
-            party_color = DEM_BLUE if t.get("party") == "democrat" else REP_RED
+            party_color = _party_color(t.get("party"))
             header = (
                 f"<font color='{_hex(party_color)}'><b>{_html_escape(who)}</b></font>"
                 f" <font color='{_hex(INK_MUTE)}'>· {t.get('role', '?')}</font>"

@@ -1,10 +1,9 @@
-"""Democrat Party agent definitions, loaded from JSON."""
-from pathlib import Path
+"""Democratic Party agent definitions.
 
-from .base import load_agents, register_agents, validate_relationships
+R2-C: this module is now a thin compatibility shim over the generic
+`loader.load_party_agents` API. `DEMOCRAT_AGENTS` is preserved so legacy
+callers and tests that import it directly keep working.
+"""
+from .loader import load_party_agents
 
-_DATA_DIR = Path(__file__).parent / "data" / "democrat"
-
-DEMOCRAT_AGENTS = load_agents(_DATA_DIR)
-validate_relationships(DEMOCRAT_AGENTS)
-register_agents(DEMOCRAT_AGENTS)
+DEMOCRAT_AGENTS = load_party_agents("democrat")

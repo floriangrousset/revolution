@@ -506,16 +506,44 @@ function describeArc(cx: number, cy: number, r: number, a1: number, a2: number):
   return `M ${p1.x} ${p1.y} A ${r} ${r} 0 0 1 ${p2.x} ${p2.y}`;
 }
 
-function buildChamber(personas: Persona[]): ChamberSeat[] {
+// Hand-tuned spans for the original D+R hemicycle. When the debate uses
+// only those two parties we re-use these exact values so the look matches
+// the M4–M5 chamber. For N>2 (or unknown party ids) we generate equal
+// wedges procedurally.
+const TWO_PARTY_LAYOUTS: Record<string, { head: number; span: [number, number] }> = {
+  democrat: { head: 109, span: [173, 118] },
+  republican: { head: 71, span: [62, 7] },
+};
+
+function buildChamber(personas: Persona[], partyIds: string[]): ChamberSeat[] {
   const seats: ChamberSeat[] = [];
   const cx = 500;
   const cy = 470;
-  (["democrat", "republican"] as const).forEach((party) => {
+
+  const useTwoPartyLayout =
+    partyIds.length === 2 && partyIds.every((p) => p in TWO_PARTY_LAYOUTS);
+
+  partyIds.forEach((party, partyIdx) => {
     const list = personas.filter((p) => p.party === party);
     const head = list.find((p) => p.role === "party_head");
     const rest = list.filter((p) => p.role !== "party_head").slice(0, 10);
     if (!head) return;
-    const headDeg = party === "democrat" ? 109 : 71;
+
+    let headDeg: number;
+    let span: [number, number];
+    if (useTwoPartyLayout) {
+      const layout = TWO_PARTY_LAYOUTS[party];
+      headDeg = layout.head;
+      span = layout.span;
+    } else {
+      // Equal-width wedges across the 180° hemicycle, leftmost party first.
+      const wedge = 180 / partyIds.length;
+      const inner = wedge * 0.78; // small visual gap between adjacent wedges
+      const center = 180 - (partyIdx + 0.5) * wedge;
+      headDeg = center;
+      span = [center + inner / 2, center - inner / 2];
+    }
+
     const ha = (headDeg * Math.PI) / 180;
     seats.push({
       agentId: head.id,
@@ -529,7 +557,6 @@ function buildChamber(personas: Persona[]): ChamberSeat[] {
       { n: 3, r: 340 },
       { n: 4, r: 430 },
     ];
-    const span = party === "democrat" ? [173, 118] : [62, 7];
     let idx = 0;
     rings.forEach((ring) => {
       for (let i = 0; i < ring.n; i++) {
@@ -658,8 +685,8 @@ function ChamberSeatNode({
     .slice(-2)
     .map((s) => s[0])
     .join("");
-  const base = persona.party === "democrat" ? T.dem : T.rep;
-  const bright = persona.party === "democrat" ? T.demBright : T.repBright;
+  const base = partyColor(persona.party);
+  const bright = partyBright(persona.party);
   const voteCol =
     vote === "support"
       ? T.support
@@ -799,7 +826,13 @@ function Overview({
   }, [speakerTurns]);
 
   // Chamber-specific derived state.
-  const seats = useMemo(() => buildChamber(personas), [personas]);
+  const partyIds = useMemo(
+    () => (debate.config.parties && debate.config.parties.length > 0
+      ? debate.config.parties
+      : ["democrat", "republican"]),
+    [debate.config.parties],
+  );
+  const seats = useMemo(() => buildChamber(personas, partyIds), [personas, partyIds]);
   const personaById = useMemo(
     () => Object.fromEntries(personas.map((p) => [p.id, p])),
     [personas],

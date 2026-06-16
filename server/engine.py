@@ -351,6 +351,7 @@ async def run_debate(debate_id: str) -> None:
             display_callback=emit,
             model=cfg.get("model"),
             temperature=cfg.get("temperature"),
+            parties=cfg.get("parties"),
         )
     except Exception as e:
         log.exception("debate %s failed", debate_id)
@@ -362,9 +363,16 @@ async def run_debate(debate_id: str) -> None:
         broadcaster.publish(debate_id, Event.done())
         return
 
-    rep_votes = result.get("republican_votes", [])
-    dem_votes = result.get("democrat_votes", [])
-    voting = determine_final_result(rep_votes, dem_votes)
+    # Pull per-party votes from the dict-keyed state, falling back to the
+    # legacy republican_votes / democrat_votes fields when the engine ran in
+    # back-compat mode.
+    votes_by_party: dict[str, list[Vote]] = dict(result.get("votes_by_party") or {})
+    if not votes_by_party.get("republican") and result.get("republican_votes"):
+        votes_by_party["republican"] = list(result["republican_votes"])
+    if not votes_by_party.get("democrat") and result.get("democrat_votes"):
+        votes_by_party["democrat"] = list(result["democrat_votes"])
+
+    voting = determine_final_result(votes_by_party)
     final_status = "passed" if voting.passed else "rejected"
     if result.get("final_result") == "amended":
         final_status = "amended"
@@ -374,8 +382,10 @@ async def run_debate(debate_id: str) -> None:
     # `previous_votes` here was the M5 bug — by this point it equals the final
     # vote per agent and `changed` is always False.)
     votes_payload: list[dict[str, Any]] = []
-    for v in list(rep_votes) + list(dem_votes):
-        votes_payload.append(_serialize_vote(v, previous=first_votes))
+    party_order = cfg.get("parties") or list(votes_by_party.keys())
+    for party in party_order:
+        for v in votes_by_party.get(party, []):
+            votes_payload.append(_serialize_vote(v, previous=first_votes))
     _atomic_write_json(
         _debate_dir(debate_id) / "votes.json",
         {"votes": votes_payload},

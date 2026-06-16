@@ -3,7 +3,7 @@ import { api } from "../api";
 import { Avatar } from "../components/Avatar";
 import { Btn } from "../components/Btn";
 import { Card, SectionTitle } from "../components/Card";
-import { T, partyBright } from "../theme";
+import { T, partyBright, partyColor } from "../theme";
 import type {
   Persona,
   PersonaSummary,
@@ -154,7 +154,7 @@ export function Graph({ nav }: GraphProps) {
               .slice(-2)
               .map((s) => s[0])
               .join("");
-            const base = p.party === "democrat" ? T.dem : p.party === "republican" ? T.rep : T.gold;
+            const base = partyColor(p.party);
             const bright = partyBright(p.party);
             const dim = isDim(p.id);
             const r = p.role === "party_head" ? 28 : 20;
