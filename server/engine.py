@@ -17,6 +17,7 @@ from src.state.types import AgentMessage, Vote
 from src.voting.consensus import determine_final_result
 
 from . import db
+from .events import Event, broadcaster
 from .settings import get_settings
 
 log = logging.getLogger(__name__)
@@ -242,9 +243,11 @@ async def run_debate(debate_id: str) -> None:
     started = time.monotonic()
     record["status"] = "running"
     _atomic_write_json(_debate_dir(debate_id) / "debate.json", record)
+    broadcaster.publish(debate_id, Event.phase("intro"))
 
     turn_counter = {"i": 0}
     previous_votes: dict[str, str] = {}
+    phase_state: dict[str, str | None] = {"current": None}
     transcript_path = _debate_dir(debate_id) / "transcript.jsonl"
     transcript_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -256,15 +259,31 @@ async def run_debate(debate_id: str) -> None:
     loop = asyncio.get_running_loop()
 
     def emit(item: AgentMessage | Vote) -> None:
-        """Sync callback invoked by graph nodes. Persist + (later) enqueue."""
+        """Sync callback invoked by graph nodes. Persist + publish SSE."""
         if isinstance(item, AgentMessage):
             turn_counter["i"] += 1
             payload = _serialize_message(item, turn_index=turn_counter["i"])
+            # Phase transition?
+            if phase_state["current"] != payload["phase"]:
+                phase_state["current"] = payload["phase"]
+                broadcaster.publish(debate_id, Event.phase(payload["phase"]))
+            broadcaster.publish(
+                debate_id,
+                Event.turn_start(
+                    agent=item.agent_id, party=item.party, phase=payload["phase"]
+                ),
+            )
+            broadcaster.publish(debate_id, Event.turn_end(payload))
             asyncio.run_coroutine_threadsafe(append_transcript_line(payload), loop)
         elif isinstance(item, Vote):
             payload = _serialize_vote(item, previous=previous_votes)
+            if payload["changed"] and payload.get("from"):
+                broadcaster.publish(
+                    debate_id,
+                    Event.vote_change(agent=item.agent_id, from_=payload["from"], to=item.vote),
+                )
+            broadcaster.publish(debate_id, Event.vote(payload))
             previous_votes[item.agent_id] = item.vote
-            # We accumulate votes in memory; written to votes.json at the end.
 
     try:
         cfg: dict[str, Any] = record["config"]
@@ -280,6 +299,8 @@ async def run_debate(debate_id: str) -> None:
         record["status"] = "error"
         record["error"] = str(e)
         _atomic_write_json(_debate_dir(debate_id) / "debate.json", record)
+        broadcaster.mark_done(debate_id, Event.error(str(e)))
+        broadcaster.publish(debate_id, Event.done())
         return
 
     rep_votes = result.get("republican_votes", [])
@@ -343,3 +364,9 @@ async def run_debate(debate_id: str) -> None:
             "created_at": record["created_at"],
         }
     )
+
+    broadcaster.mark_done(
+        debate_id,
+        Event.result({"result": final_status, "tally": tally}),
+    )
+    broadcaster.publish(debate_id, Event.done())
