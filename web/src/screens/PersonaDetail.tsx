@@ -4,12 +4,13 @@ import { api } from "../api";
 import { Avatar } from "../components/Avatar";
 import { Btn, IconBtn } from "../components/Btn";
 import { Card } from "../components/Card";
-import { Field, TextArea, TextInput, inputStyle } from "../components/Form";
+import { TextArea, TextInput, inputStyle } from "../components/Form";
 import { Icon } from "../components/Icon";
+import { PersonaPicker } from "../components/PersonaPicker";
 import { PartyTag, PostureTag, RoleTag } from "../components/Tags";
 import { POSTURE_META } from "../meta";
 import { partyColor } from "../theme";
-import type { NegotiationPosture, Persona } from "../types";
+import type { NegotiationPosture, PartyEntry, Persona, Role } from "../types";
 
 interface PersonaDetailProps {
   id: string;
@@ -19,6 +20,7 @@ interface PersonaDetailProps {
 export function PersonaDetail({ id, nav }: PersonaDetailProps) {
   const [p, setP] = useState<Persona | null>(null);
   const [draft, setDraft] = useState<Persona | null>(null);
+  const [parties, setParties] = useState<PartyEntry[]>([]);
   const [edit, setEdit] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export function PersonaDetail({ id, nav }: PersonaDetailProps) {
         setDraft(r);
       })
       .catch((e) => setError(String(e.message || e)));
+    void api.listParties().then((r) => setParties(r.parties));
   }, [id]);
 
   if (error) {
@@ -120,9 +123,64 @@ export function PersonaDetail({ id, nav }: PersonaDetailProps) {
           <Avatar p={draft} size={78} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-              <PartyTag party={draft.party} />
-              <RoleTag role={draft.role} />
-              <PostureTag posture={draft.negotiation_posture} />
+              {edit ? (
+                <>
+                  <select
+                    value={draft.party}
+                    onChange={(e) => set("party", e.target.value)}
+                    style={{
+                      ...inputStyle,
+                      width: "auto",
+                      padding: "5px 10px",
+                      fontSize: 12,
+                    }}
+                  >
+                    {parties.map((pp) => (
+                      <option key={pp.id} value={pp.id}>
+                        {pp.label}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={draft.role}
+                    onChange={(e) => set("role", e.target.value as Role)}
+                    style={{
+                      ...inputStyle,
+                      width: "auto",
+                      padding: "5px 10px",
+                      fontSize: 12,
+                    }}
+                  >
+                    <option value="party_head">Party Head</option>
+                    <option value="advisor">Senior Advisor</option>
+                    <option value="assistant">Policy Assistant</option>
+                  </select>
+                  <select
+                    value={draft.negotiation_posture}
+                    onChange={(e) =>
+                      set("negotiation_posture", e.target.value as NegotiationPosture)
+                    }
+                    style={{
+                      ...inputStyle,
+                      width: "auto",
+                      padding: "5px 10px",
+                      fontSize: 12,
+                    }}
+                  >
+                    {(Object.keys(POSTURE_META) as NegotiationPosture[]).map((k) => (
+                      <option key={k} value={k}>
+                        {POSTURE_META[k].label}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <>
+                  <PartyTag party={draft.party} />
+                  <RoleTag role={draft.role} />
+                  <PostureTag posture={draft.negotiation_posture} />
+                </>
+              )}
             </div>
             {edit ? (
               <TextInput
@@ -310,7 +368,58 @@ export function PersonaDetail({ id, nav }: PersonaDetailProps) {
             )}
           </Block>
 
-          <Relationships allies={draft.allies} rivals={draft.rivals} nav={nav} />
+          <Block title="In-Room Relationships" icon="graph">
+            {edit ? (
+              <div style={{ display: "grid", gap: 16 }}>
+                <div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: ".1em",
+                      textTransform: "uppercase",
+                      color: "var(--support)",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Allies
+                  </div>
+                  <PersonaPicker
+                    party={draft.party}
+                    selfId={draft.id}
+                    value={draft.allies}
+                    onChange={(v) => set("allies", v)}
+                    accent="var(--support)"
+                    placeholder="Add an ally from the same caucus…"
+                  />
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      letterSpacing: ".1em",
+                      textTransform: "uppercase",
+                      color: "var(--oppose)",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Rivals
+                  </div>
+                  <PersonaPicker
+                    party={draft.party}
+                    selfId={draft.id}
+                    value={draft.rivals}
+                    onChange={(v) => set("rivals", v)}
+                    accent="var(--oppose)"
+                    placeholder="Add a rival from the same caucus…"
+                  />
+                </div>
+              </div>
+            ) : (
+              <Relationships allies={draft.allies} rivals={draft.rivals} nav={nav} />
+            )}
+          </Block>
         </div>
       </div>
     </div>
@@ -436,7 +545,7 @@ function Relationships({
   };
 
   return (
-    <Block title="In-Room Relationships" icon="graph">
+    <>
       <div
         style={{
           fontSize: 11,
@@ -495,6 +604,6 @@ function Relationships({
           <span style={{ fontSize: 13, color: "var(--txt-faint)" }}>None recorded</span>
         )}
       </div>
-    </Block>
+    </>
   );
 }

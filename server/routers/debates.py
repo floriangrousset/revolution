@@ -62,6 +62,28 @@ def get_debate(debate_id: str) -> dict[str, Any]:
     return record
 
 
+@router.patch("/{debate_id}")
+def update_debate(debate_id: str, body: dict[str, Any]) -> dict[str, Any]:
+    """Allow renaming a debate's title. Other fields are engine-owned and not patchable."""
+    record = engine.get_debate(debate_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail={"code": "not_found", "message": f"debate {debate_id!r} not found"})
+    title = body.get("title")
+    if title is None or not isinstance(title, str) or not title.strip():
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "invalid", "message": "only `title` (non-empty string) can be patched"},
+        )
+    return engine.update_debate_title(debate_id, title.strip())
+
+
+@router.delete("/{debate_id}", status_code=204)
+def delete_debate(debate_id: str) -> Response:
+    if not engine.delete_debate(debate_id):
+        raise HTTPException(status_code=404, detail={"code": "not_found", "message": f"debate {debate_id!r} not found"})
+    return Response(status_code=204)
+
+
 @router.get("/{debate_id}/transcript")
 def get_transcript(debate_id: str) -> dict[str, list[dict[str, Any]]]:
     return {"turns": engine.read_transcript(debate_id)}

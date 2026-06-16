@@ -4,7 +4,7 @@ from langgraph.graph import StateGraph, START, END
 
 from ..state.types import NegotiationState, Proposal, AgentMessage
 from .party_graph import run_party_deliberation
-from .nodes import cross_party_debate, conduct_voting
+from .nodes import cross_party_debate, conduct_voting, initial_voting
 from ..voting.consensus import determine_final_result
 
 
@@ -88,6 +88,20 @@ def build_main_graph(display_callback: Optional[Callable] = None):
             "phase": "cross_party_debate"
         }
 
+    async def initial_voting_node(state: NegotiationState) -> dict:
+        """Tentative pre-debate vote — feeds the persuasion timeline."""
+        if display_callback:
+            display_callback(AgentMessage(
+                agent_id="system",
+                agent_name="System",
+                party="neutral",
+                role="system",
+                content="Calling tentative roll before cross-party debate...",
+                phase="initial_voting",
+            ))
+
+        return await initial_voting(state, display_callback)
+
     async def debate_node(state: NegotiationState) -> dict:
         """Conduct cross-party debate."""
         if display_callback:
@@ -155,6 +169,7 @@ def build_main_graph(display_callback: Optional[Callable] = None):
     builder.add_node("receive_proposal", receive_proposal)
     builder.add_node("republican_deliberation", republican_deliberation)
     builder.add_node("democrat_deliberation", democrat_deliberation)
+    builder.add_node("initial_voting", initial_voting_node)
     builder.add_node("cross_party_debate", debate_node)
     builder.add_node("final_voting", voting_node)
     builder.add_node("resolution", resolution_node)
@@ -163,7 +178,8 @@ def build_main_graph(display_callback: Optional[Callable] = None):
     builder.add_edge(START, "receive_proposal")
     builder.add_edge("receive_proposal", "republican_deliberation")
     builder.add_edge("republican_deliberation", "democrat_deliberation")
-    builder.add_edge("democrat_deliberation", "cross_party_debate")
+    builder.add_edge("democrat_deliberation", "initial_voting")
+    builder.add_edge("initial_voting", "cross_party_debate")
 
     # After debate, either continue or vote
     builder.add_conditional_edges(

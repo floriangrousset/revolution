@@ -293,14 +293,32 @@ def save_persona(persona: dict[str, Any], *, expected_id: str | None = None) -> 
     """Validate and write a persona to disk. Returns the saved record.
 
     Raises ValueError on validation failure (unknown enum, ally/rival rules…).
+    If the persona's `party` changed since the last save, the previous on-disk
+    file is removed so we don't leave an orphan in the old party's directory.
     """
     agent = Agent(**persona)  # raises ValueError on bad enums/sources
+
+    # Detect a party change against the current on-disk file. The lookup walks
+    # all party directories rather than trusting the caller's payload, which
+    # may already be the new party.
+    previous_path: Path | None = None
+    for existing in load_all_personas():
+        if existing.id == agent.id and existing.party != agent.party:
+            previous_path = _persona_path(existing.party, existing.id)
+            break
+
     others = [a for a in load_all_personas() if a.id != agent.id]
     validate_relationships(others + [agent])
     if expected_id is not None and expected_id != agent.id:
         raise ValueError(f"id mismatch: path={expected_id!r} body={agent.id!r}")
     path = _persona_path(agent.party, agent.id)
     _atomic_write_json(path, _agent_to_dict(agent))
+
+    if previous_path is not None and previous_path.exists() and previous_path != path:
+        try:
+            previous_path.unlink()
+        except OSError as e:
+            log.warning("orphaned persona file %s left behind: %s", previous_path, e)
     return _agent_to_dict(agent)
 
 

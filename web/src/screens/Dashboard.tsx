@@ -14,6 +14,7 @@ interface DashboardProps {
 export function Dashboard({ nav }: DashboardProps) {
   const [debates, setDebates] = useState<DebateSummary[]>([]);
   const [stats, setStats] = useState({ democrat: 0, republican: 0 });
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
 
   useEffect(() => {
     void api.listParties().then((r) => {
@@ -181,7 +182,7 @@ export function Dashboard({ nav }: DashboardProps) {
               onClick={() => nav("results", d.id)}
               style={{
                 display: "grid",
-                gridTemplateColumns: "minmax(0,1fr) 240px 150px",
+                gridTemplateColumns: "minmax(0,1fr) 240px 150px 32px",
                 gap: 24,
                 alignItems: "center",
               }}
@@ -242,10 +243,128 @@ export function Dashboard({ nav }: DashboardProps) {
                   <Icon name="arrowR" size={15} />
                 </div>
               </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPendingDelete(d.id);
+                }}
+                title="Delete debate"
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: "var(--r-md)",
+                  background: "transparent",
+                  border: "1px solid transparent",
+                  color: "var(--txt-faint)",
+                  display: "grid",
+                  placeItems: "center",
+                  cursor: "pointer",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "var(--rep-bright)";
+                  e.currentTarget.style.borderColor = "var(--rep-deep)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "var(--txt-faint)";
+                  e.currentTarget.style.borderColor = "transparent";
+                }}
+              >
+                <Icon name="x" size={14} stroke={2.2} />
+              </button>
             </Card>
           ))}
         </div>
       )}
+
+      {pendingDelete && (
+        <DeleteDebateModal
+          id={pendingDelete}
+          onClose={() => setPendingDelete(null)}
+          onDeleted={() => {
+            setPendingDelete(null);
+            void api.listDebates().then((r) => setDebates(r.debates)).catch(() => null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function DeleteDebateModal({
+  id,
+  onClose,
+  onDeleted,
+}: {
+  id: string;
+  onClose: () => void;
+  onDeleted: () => void;
+}) {
+  const [working, setWorking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const confirm = async () => {
+    setWorking(true);
+    try {
+      await api.deleteDebate(id);
+      onDeleted();
+    } catch (e) {
+      setError(String((e as Error).message || e));
+    } finally {
+      setWorking(false);
+    }
+  };
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 200,
+        background: "rgba(5,10,18,0.72)",
+        backdropFilter: "blur(6px)",
+        display: "grid",
+        placeItems: "center",
+        padding: 24,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="ink-panel rise"
+        style={{ width: 420, padding: "22px 24px" }}
+      >
+        <div className="eyebrow" style={{ marginBottom: 8, color: "var(--reject)" }}>
+          Remove debate
+        </div>
+        <div className="serif" style={{ fontSize: 19, fontWeight: 600, marginBottom: 12 }}>
+          Delete this deliberation?
+        </div>
+        <p style={{ fontSize: 13.5, color: "var(--txt-mute)", lineHeight: 1.6, margin: 0 }}>
+          Transcript, votes, amendments, and the index row are permanently removed. This
+          cannot be undone.
+        </p>
+        {error && (
+          <div
+            style={{
+              marginTop: 14,
+              padding: "10px 14px",
+              borderRadius: "var(--r-md)",
+              background: "rgba(192,57,43,0.12)",
+              border: "1px solid var(--reject)",
+              color: "var(--reject)",
+              fontSize: 13,
+            }}
+          >
+            {error}
+          </div>
+        )}
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 18 }}>
+          <Btn kind="ghost" onClick={onClose}>
+            Cancel
+          </Btn>
+          <Btn kind="danger" icon="x" onClick={confirm} disabled={working}>
+            {working ? "Deleting…" : "Delete debate"}
+          </Btn>
+        </div>
+      </div>
     </div>
   );
 }

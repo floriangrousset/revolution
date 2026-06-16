@@ -75,8 +75,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+export interface HealthSnapshot {
+  status: "ok" | "error";
+  api_key_set: boolean;
+  default_model: string;
+  active_debates: number;
+  total_debates: number;
+  uptime_s: number;
+  server_time: string;
+  version: string;
+  // legacy field kept for back-compat with the M1 sidebar
+  model?: string;
+}
+
 export const api = {
-  health: () => request<{ status: string; model: string }>("/api/health"),
+  health: () => request<HealthSnapshot>("/api/health"),
 
   // personas
   listPersonas: (params?: { party?: string; role?: string; q?: string }) => {
@@ -119,6 +132,13 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  updateDebate: (id: string, patch: { title?: string }) =>
+    request<DebateDetail>(`/api/debates/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  deleteDebate: (id: string) =>
+    request<void>(`/api/debates/${id}`, { method: "DELETE" }),
   getTranscript: (id: string) => request<{ turns: Turn[] }>(`/api/debates/${id}/transcript`),
   getVotes: (id: string) => request<{ votes: VoteRecord[] }>(`/api/debates/${id}/votes`),
   getAmendments: (id: string) =>

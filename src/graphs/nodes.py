@@ -449,6 +449,64 @@ async def cross_party_debate(state: NegotiationState, display_callback=None) -> 
 # Voting Nodes
 # ============================================================================
 
+async def initial_voting(state: NegotiationState, display_callback=None) -> dict[str, Any]:
+    """Agents cast a tentative vote based ONLY on their party's synthesized position,
+    before the cross-party debate. Pairs with the final `conduct_voting` to expose
+    the persuasion mechanic — agents whose minds change between these two passes
+    populate the Persuasion Timeline on the Results page.
+
+    Kept lighter than `conduct_voting`: shorter prompt, no amendment proposals, and
+    agents within a party are dispatched in parallel via `asyncio.gather` so the
+    extra LLM pass adds ~30–60 s rather than minutes."""
+    import asyncio
+    model = get_model()
+
+    republican_votes: list[Vote] = []
+    democrat_votes: list[Vote] = []
+
+    parties: list[tuple[Literal["republican", "democrat"], list[Vote]]] = [
+        ("republican", republican_votes),
+        ("democrat", democrat_votes),
+    ]
+    for party, votes_list in parties:
+        agents = get_agents_by_party(party)
+        party_position = (
+            state["republican_position"] if party == "republican" else state["democrat_position"]
+        ) or ""
+
+        async def cast_initial(agent: Agent, p: Literal["republican", "democrat"] = party,
+                               position: str = party_position) -> Vote:
+            initial_prompt = (
+                f"PROPOSAL UNDER CONSIDERATION:\n{state['proposal'].description}\n\n"
+                f"YOUR PARTY'S SYNTHESIZED POSITION:\n{position}\n\n"
+                "Before the cross-party debate begins, give your INITIAL vote based on your "
+                "convictions and your party's stated position alone. You have not yet heard "
+                "the opposing party's argument.\n\n"
+                "Reply in this EXACT format on two lines and nothing else:\n"
+                "VOTE: SUPPORT (or OPPOSE or ABSTAIN)\n"
+                "REASONING: One sentence stating your initial stance.\n"
+            )
+            response = await model.ainvoke([
+                SystemMessage(content=agent.get_system_prompt(state["proposal"].description, position)),
+                HumanMessage(content=initial_prompt),
+            ])
+            return parse_vote(_content_text(response), agent, p)
+
+        # Fan out the per-agent LLM calls within a party.
+        cast_votes = await asyncio.gather(*(cast_initial(a) for a in agents))
+        votes_list.extend(cast_votes)
+        # Emit in stable order so the SSE feed mirrors the seating order.
+        if display_callback:
+            for vote in cast_votes:
+                display_callback(vote)
+
+    return {
+        "republican_votes": republican_votes,
+        "democrat_votes": democrat_votes,
+        "phase": "cross_party_debate",
+    }
+
+
 async def conduct_voting(state: NegotiationState, display_callback=None) -> dict[str, Any]:
     """All agents cast their votes."""
     model = get_model()
