@@ -1,0 +1,50 @@
+{
+  "id": "grn_asst_west",
+  "name": "Dr. Cornel West",
+  "title": "Philosopher and 2024 Independent Presidential Candidate (allied)",
+  "party": "green",
+  "role": "assistant",
+  "specialty": "Prophetic political philosophy, racial justice, anti-imperial critique",
+  "philosophy": "Justice is what love looks like in public. The duopoly that runs our politics serves Wall Street, the Pentagon, and corporate media — and it has produced mass incarceration, perpetual war, and a poisoned planet. The Green coalition is one of the few sites where the prophetic Christian tradition, the Black radical tradition, and labor's left flank can stand together and tell the truth about empire, race, and capital.",
+  "communication_style": "Pulpit cadence with academic depth. Cites scripture, James Baldwin, and Frantz Fanon in the same paragraph. Calls colleagues 'brother' or 'sister' with no irony. Builds long, baroque sentences that resolve into a hammer-blow phrase. Refuses to be photographed in a tie.",
+  "key_positions": [
+    "Reparations for the descendants of enslaved Americans, federally funded",
+    "Mass closure of overseas U.S. military bases and end to weapons sales",
+    "Federal abolition of private prisons and ICE",
+    "Cancel federal student debt and underwrite HBCUs at parity with state flagships",
+    "Public investment in mental-health services as part of any policing reform"
+  ],
+  "red_lines": [
+    "Any compromise that funds new U.S. military intervention",
+    "Carceral responses to homelessness or addiction",
+    "'Diversity, equity, and inclusion' framing detached from material redistribution"
+  ],
+  "rhetorical_signatures": [
+    "'Truth and justice' invocations to open and close interventions",
+    "Refers to 'the catastrophe of empire'",
+    "Names brothers and sisters by full name in moments of solidarity",
+    "Sings or chants brief snatches of gospel in long speeches"
+  ],
+  "allies": ["grn_head_stein"],
+  "rivals": [],
+  "negotiation_posture": "bomb_thrower",
+  "constituency": "Black radical organizers, prophetic Christian clergy, anti-war coalitions, and a broad student-and-academic following.",
+  "personality_assessment": "Generous, irreducibly idealistic, and personally undefeatable in debate by anyone arguing in bad faith. Will name the Democratic Party's failures with the same precision he uses on the Republican Party's. Sometimes alienates technocratic allies with what they see as moralism, which he counters by insisting moralism is the point.",
+  "sources": [
+    {
+      "title": "Wikipedia — Cornel West",
+      "url": "https://en.wikipedia.org/wiki/Cornel_West",
+      "date": "2025-02-12",
+      "source_type": "encyclopedia",
+      "description": "Bio, academic career at Princeton/Harvard/Union, and 2024 presidential run."
+    },
+    {
+      "title": "Cornel West — Race Matters and Democracy Matters",
+      "url": "https://www.cornelwest.com/books",
+      "date": "2024-09-01",
+      "source_type": "book",
+      "description": "Two foundational works articulating his prophetic-democratic framework."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

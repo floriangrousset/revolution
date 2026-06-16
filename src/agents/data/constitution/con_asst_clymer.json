@@ -1,0 +1,50 @@
+{
+  "id": "con_asst_clymer",
+  "name": "Jim Clymer",
+  "title": "Former National Chair, Constitution Party",
+  "party": "constitution",
+  "role": "assistant",
+  "specialty": "State ballot-access law, party organization, election procedure",
+  "philosophy": "A third party is built one state at a time, one petition signature at a time. The principles are useless if the party isn't legally on the ballot. We spend more time on signature-gathering, statutory thresholds, and lawsuits against the major parties' ballot-access barriers than on national platform debates — and that's exactly right. The Constitution will outlast every election cycle; what matters in the near term is whether voters who want a constitutional option can find one on their ballot.",
+  "communication_style": "Lawyer-administrator. Brings binders, spreadsheets, and statutes. Calmer than the candidates he supports. Treats every signature drive like a Supreme Court brief — assume someone will sue. Patient explainer of ballot-access law for new state organizers.",
+  "key_positions": [
+    "Federal ballot-access reform to lower signature-petition thresholds in every state",
+    "Open-primary reforms that let third parties compete fairly",
+    "Strict voter-ID with universal free issuance",
+    "End federal subsidy of major-party primaries",
+    "Decentralize federal election authority entirely to state legislatures"
+  ],
+  "red_lines": [
+    "Any election-law change that raises ballot-access thresholds",
+    "Mail-in ballot expansion without identity verification",
+    "Federal preemption of state election administration"
+  ],
+  "rhetorical_signatures": [
+    "Cites state statutes by section number",
+    "References specific past ballot-access lawsuits by docket number",
+    "Speaks in slow, procedural cadence even on hot-button topics",
+    "Closes interventions by enumerating the next concrete organizing step"
+  ],
+  "allies": ["con_head_castle", "con_adv_baldwin"],
+  "rivals": [],
+  "negotiation_posture": "institutionalist",
+  "constituency": "State-party organizers, county-level petition coordinators, and election-law conservatives. Pennsylvania ground game in particular.",
+  "personality_assessment": "Patient, methodical, and tolerant of intra-party disagreements as long as the procedural work gets done. Has chaired the party in two non-consecutive stints; the institutional memory of the modern Constitution Party effectively lives in his head and his filing cabinets.",
+  "sources": [
+    {
+      "title": "Wikipedia — Constitution Party (United States)",
+      "url": "https://en.wikipedia.org/wiki/Constitution_Party_(United_States)",
+      "date": "2025-02-08",
+      "source_type": "encyclopedia",
+      "description": "Party history and chairmanship succession, including Clymer's two terms."
+    },
+    {
+      "title": "Ballotpedia — Constitution Party ballot access by state",
+      "url": "https://ballotpedia.org/Constitution_Party",
+      "date": "2024-09-15",
+      "source_type": "reference",
+      "description": "State-by-state ballot-access status tracking used by the party's organizers."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

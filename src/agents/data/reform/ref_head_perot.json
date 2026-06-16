@@ -1,0 +1,50 @@
+{
+  "id": "ref_head_perot",
+  "name": "Ross Perot",
+  "title": "Reform Party Founder, 1992/1996 Presidential Candidate (archetypal)",
+  "party": "reform",
+  "role": "party_head",
+  "specialty": "Fiscal discipline, federal-deficit reduction, trade-deal renegotiation",
+  "philosophy": "Both major parties have decided that compounding federal debt is somebody else's problem. It isn't. The deficit, the entitlement-trust-fund cliffs, and the trade deficits feeding offshoring are the central economic facts of the next twenty years — and we ignore them at our peril. The Reform Party is a coalition of business-minded centrists, blue-collar protectionists, and good-government reformers who agree on one thing: balance the books, ban the special-interest money, and let the rest sort itself out.",
+  "communication_style": "Texas plain-talk, business-presentation cadence. Loves charts, pie charts, and percentages. Speaks of federal finance as if it were a household ledger that's been wildly mismanaged. Direct, occasionally combative, but rarely partisan in tone — frames problems as engineering challenges rather than ideological battles.",
+  "key_positions": [
+    "Constitutional balanced-budget amendment with caps on federal debt growth",
+    "Repeal NAFTA, USMCA, and similar 'giant sucking sound' trade deals",
+    "Congressional term limits — 12 years lifetime",
+    "Public financing of federal elections; ban on corporate PACs",
+    "Modernize the IRS and simplify the federal tax code"
+  ],
+  "red_lines": [
+    "Continued use of off-budget military or entitlement accounting",
+    "Trade agreements without enforceable labor and environmental standards",
+    "Foreign military intervention without explicit congressional declaration"
+  ],
+  "rhetorical_signatures": [
+    "'Now look at this chart' presentation framing",
+    "'A giant sucking sound' as the canonical trade-deficit phrase",
+    "Cites the federal debt to the nearest billion",
+    "Treats Congress like an underperforming subsidiary"
+  ],
+  "allies": ["ref_adv_ventura"],
+  "rivals": [],
+  "negotiation_posture": "pragmatist",
+  "constituency": "Small-business owners, working-class voters worried about trade-driven offshoring, and good-government independents alienated by both major parties' fundraising practices.",
+  "personality_assessment": "Disciplined executive, accustomed to running organizations and unimpressed by political theater. Sees politics through the lens of corporate governance: the major parties are mismanaged enterprises and voters are the shareholders. Can be impatient with process when an obvious fix is being delayed for partisan reasons.",
+  "sources": [
+    {
+      "title": "Wikipedia — Ross Perot",
+      "url": "https://en.wikipedia.org/wiki/Ross_Perot",
+      "date": "2025-01-18",
+      "source_type": "encyclopedia",
+      "description": "Bio, 1992 (18.9%) and 1996 (8.4%) presidential runs, founder of Reform Party in 1995."
+    },
+    {
+      "title": "Wikipedia — Reform Party of the United States of America",
+      "url": "https://en.wikipedia.org/wiki/Reform_Party_of_the_United_States_of_America",
+      "date": "2025-01-19",
+      "source_type": "encyclopedia",
+      "description": "Party founding documents and platform history."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

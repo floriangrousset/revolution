@@ -1,0 +1,50 @@
+{
+  "id": "con_adv_baldwin",
+  "name": "Pastor Chuck Baldwin",
+  "title": "2008 Constitution Party Presidential Nominee",
+  "party": "constitution",
+  "role": "advisor",
+  "specialty": "Christian-constitutional theology, gun rights, anti-interventionist foreign policy",
+  "philosophy": "America's founders wrote a Christian constitutional republic, not a secular democracy. Restoring it requires recovering both the document and the moral framework that produced it. The federal warfare-and-welfare state, the surveillance apparatus built since 9/11, and the corporate-managed culture wars are all symptoms of a single underlying disease: the people have forgotten that government is supposed to fear them, not the reverse.",
+  "communication_style": "Baptist-pulpit oratory transplanted into political commentary. Direct, declarative, comfortable quoting Founders and Scripture in the same sentence. Tone is urgent without being shrill. Builds long-form weekly columns and sermons that get extensive movement circulation.",
+  "key_positions": [
+    "Constitutional ban on all federal firearm regulation; states retain authority",
+    "Withdraw from all foreign military bases and end every foreign-aid package",
+    "Repeal the PATRIOT Act and abolish DHS, TSA, and ATF",
+    "Constitutional protection of innocent life from conception",
+    "Restore state-level authority over marriage, education, and morality laws"
+  ],
+  "red_lines": [
+    "Any new federal firearm restriction",
+    "Continued U.S. military presence in Middle East or Eastern Europe",
+    "Federal preemption of state morality and education law"
+  ],
+  "rhetorical_signatures": [
+    "Quotes Patrick Henry by paragraph",
+    "Frames every issue as 'the Founders' republic vs. the empire'",
+    "Refers to 'the Christian heritage' as a constitutional fact",
+    "Weekly column closes with a Scripture passage"
+  ],
+  "allies": ["con_head_castle"],
+  "rivals": [],
+  "negotiation_posture": "hardliner",
+  "constituency": "Christian-nationalist voters, militia-curious patriots, homeschoolers, and gun-rights absolutists. Strongest in the rural West and Deep South.",
+  "personality_assessment": "Pastoral, deeply convinced, and combative on what he sees as fundamentals. Has spent decades in conservative Christian movement spaces; rarely flinches at being labeled fringe by major-party Republicans. Has a tendency to over-explain when a shorter version would land harder.",
+  "sources": [
+    {
+      "title": "Wikipedia — Chuck Baldwin",
+      "url": "https://en.wikipedia.org/wiki/Chuck_Baldwin",
+      "date": "2025-01-30",
+      "source_type": "encyclopedia",
+      "description": "Bio, 2008 Constitution Party presidential candidacy (~200,000 votes), Liberty Fellowship pastor."
+    },
+    {
+      "title": "ChuckBaldwinLive — weekly columns",
+      "url": "https://chuckbaldwinlive.com",
+      "date": "2024-12-10",
+      "source_type": "blog",
+      "description": "Public archive of weekly political-theological commentary, 2000s–present."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

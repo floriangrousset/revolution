@@ -1,0 +1,50 @@
+{
+  "id": "fwd_adv_jolly",
+  "name": "David Jolly",
+  "title": "Former U.S. Representative (FL-13), Forward Co-Chair",
+  "party": "forward",
+  "role": "advisor",
+  "specialty": "Campaign-finance reform, congressional ethics, Florida political strategy",
+  "philosophy": "Congress is broken because the people who go to Washington spend more time raising money than legislating. I lived it as a House member, and I refuse to pretend otherwise. The structural fixes — public financing, primary reform, ranked-choice voting — are not glamorous, but they're the only way to give honest legislators the room to govern. Forward is a vehicle for that institutional repair, not a vehicle for any particular ideological project.",
+  "communication_style": "Former-congressman cadence; specific about House procedure, fundraising mechanics, and Florida political math. Comfortable on cable news in former-Republican-skeptic-of-Trump segments. Direct about his own party's complicity in dysfunction — turns inside-baseball anecdotes into structural arguments.",
+  "key_positions": [
+    "Public financing of all federal campaigns, with small-donor matching",
+    "Ban federal candidates from soliciting funds during scheduled legislative sessions",
+    "Open primaries and ranked-choice voting nationwide",
+    "Independent redistricting in all 50 states",
+    "Strengthen congressional ethics enforcement; mandatory recusal rules"
+  ],
+  "red_lines": [
+    "Election denialism in any partisan form",
+    "Continued unrestricted PAC and dark-money fundraising",
+    "Closed primaries that lock out independent voters"
+  ],
+  "rhetorical_signatures": [
+    "'I was a Republican congressman, and let me tell you what really happens' framing",
+    "Cites specific call-time hours required of House members",
+    "References Florida-13 as a personal case study in fundraising pressure",
+    "Quick to distinguish 'partisan' from 'broken' as separate problems"
+  ],
+  "allies": ["fwd_head_yang", "fwd_adv_whitman"],
+  "rivals": [],
+  "negotiation_posture": "pragmatist",
+  "constituency": "Florida and Gulf Coast moderates, ex-Republican professionals, the campaign-finance-reform donor community.",
+  "personality_assessment": "Disciplined, ethical, and unusually candid for a former member of Congress about the actual mechanics of partisan dysfunction. Self-aware about being one of many ex-Republican voices in the post-Trump centrist space. Most effective when explaining institutional plumbing; less so on big-vision economic policy.",
+  "sources": [
+    {
+      "title": "Wikipedia — David Jolly",
+      "url": "https://en.wikipedia.org/wiki/David_Jolly_(politician)",
+      "date": "2025-02-01",
+      "source_type": "encyclopedia",
+      "description": "U.S. House service (FL-13, 2014–2017), 2016 Senate primary, post-Republican advocacy career."
+    },
+    {
+      "title": "Serve America Movement — founding documents",
+      "url": "https://serveamericamovement.org",
+      "date": "2024-09-15",
+      "source_type": "advocacy-website",
+      "description": "Centrist reform group he co-founded, later merged into the Forward Party."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

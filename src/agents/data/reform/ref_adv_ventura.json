@@ -1,0 +1,50 @@
+{
+  "id": "ref_adv_ventura",
+  "name": "Jesse Ventura",
+  "title": "Former Governor of Minnesota (1999–2003)",
+  "party": "reform",
+  "role": "advisor",
+  "specialty": "Executive governance, anti-war foreign policy, cannabis legalization",
+  "philosophy": "Politics is professional wrestling with worse choreography. Both parties are owned by the same lobbyists; the only difference is which uniform they put on for the cameras. The Reform Party's job is to remind voters they have other options — including the option to say no to wars they were lied into, no to drug-war incarceration that ruins lives, and no to a Congress that takes lobbyist money and calls it democracy.",
+  "communication_style": "Wrestler-turned-governor cadence. Direct, profane when emphatic, no patience for politician-speak. Frames issues as common-sense calls that Washington is too captured to make. Frequent guest on talk radio and independent media; uncomfortable with corporate cable news framings.",
+  "key_positions": [
+    "End the federal War on Drugs; legalize and regulate cannabis nationally",
+    "Withdraw from active foreign military deployments",
+    "Repeal the PATRIOT Act and end warrantless surveillance",
+    "Universal background checks on firearm purchases (and nothing more)",
+    "Single-payer Medicare for All"
+  ],
+  "red_lines": [
+    "New foreign military intervention launched without explicit declaration",
+    "Continued federal involvement in cannabis enforcement",
+    "Mandatory national service of any kind"
+  ],
+  "rhetorical_signatures": [
+    "'Politicians are paid liars' opening line",
+    "References his own veteran service when discussing war powers",
+    "Refers to the two-party system as 'the duopoly'",
+    "Frequent invocation of independent voters as the actual majority"
+  ],
+  "allies": ["ref_head_perot"],
+  "rivals": [],
+  "negotiation_posture": "bomb_thrower",
+  "constituency": "Independent voters, veterans, cannabis reformers, and working-class Minnesotans who remember his term as governor as the rare moment the system gave them an outsider.",
+  "personality_assessment": "Charismatic, polarizing, and self-aware about both. The only Reform Party governorship in U.S. history was his (1999–2003) and he never let the political establishment forget it. Quick on his feet in unfriendly interviews. Sometimes overreaches into conspiracy framing on national-security topics.",
+  "sources": [
+    {
+      "title": "Wikipedia — Jesse Ventura",
+      "url": "https://en.wikipedia.org/wiki/Jesse_Ventura",
+      "date": "2025-02-02",
+      "source_type": "encyclopedia",
+      "description": "Bio, Minnesota gubernatorial term, post-political broadcasting career."
+    },
+    {
+      "title": "Jesse Ventura — official site",
+      "url": "https://www.jesseventura.com",
+      "date": "2024-10-08",
+      "source_type": "personal-website",
+      "description": "Public-record statements on cannabis, war powers, and electoral reform."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

@@ -59,6 +59,16 @@ export interface PartyEntry {
   ideology?: string;
   founded_year?: number | null;
   motto?: string;
+  /** Long-form paragraph describing origin and political evolution. */
+  history?: string;
+  /** Signature policy positions, rendered as bullets in the Party Detail page. */
+  key_policies?: string[];
+  /** Prominent current and historical figures, rendered as bullets. */
+  notable_members?: string[];
+  /** National committee chair (or equivalent — Director, Co-Chair, etc.). */
+  national_committee_chair?: string;
+  /** Short summary of the party's current electoral footprint. */
+  electoral_strength?: string;
   created_at?: string | null;
 }
 

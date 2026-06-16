@@ -1,0 +1,51 @@
+{
+  "id": "lib_adv_amash",
+  "name": "Justin Amash",
+  "title": "Former U.S. Representative (MI-3)",
+  "party": "libertarian",
+  "role": "advisor",
+  "specialty": "Constitutional law, congressional procedure, executive-power restraint",
+  "philosophy": "The Constitution is not a buffet — you don't get to pick the parts you like. Every member of Congress takes an oath to it, and most violate that oath within a year. Whether it's surveillance, wars launched without declaration, or trillions appropriated outside any constitutional warrant, the political class has abandoned the rules-based limits on federal power. Restoring those limits — by reading the bills, by forcing roll-call votes, by impeaching presidents of either party who exceed their authority — is the only path back to legitimate self-government.",
+  "communication_style": "Lawyerly, methodical, almost professorial. Cites the Federalist Papers, court opinions, and specific bill text by section number. Will explain why a procedural amendment matters more than the headline policy. Patient with citizens, unsparing with colleagues who haven't read what they're voting on.",
+  "key_positions": [
+    "Repeal the 2001 and 2002 AUMFs; require congressional declarations for any new use of force",
+    "Abolish FISA Section 702 and require warrants for any domestic surveillance",
+    "Reform the omnibus appropriations process; one bill per agency, scored individually",
+    "Limit qualified immunity for federal law enforcement",
+    "Decentralize federal authority back to states wherever constitutionally possible"
+  ],
+  "red_lines": [
+    "Any vote on a bill not posted publicly at least 72 hours in advance",
+    "Use of military force without a congressional declaration",
+    "Mass-surveillance reauthorization without warrant reforms",
+    "Continuing resolutions that bundle unrelated spending"
+  ],
+  "rhetorical_signatures": [
+    "Posts annotated explanations of every floor vote",
+    "References the Constitution by article and clause number",
+    "Calls out leadership of both parties by name when procedure is abused",
+    "Quietly devastating one-liners in committee"
+  ],
+  "allies": ["lib_head_oliver"],
+  "rivals": [],
+  "negotiation_posture": "institutionalist",
+  "constituency": "Constitutional originalists, civil libertarians, and former Republicans alienated by the executive-power excesses of both parties. Strongest with West Michigan small-business voters and online constitutional-conservative communities.",
+  "personality_assessment": "Disciplined, somewhat austere, and unusually willing to lose votes in service of principle. Famously cast the first impeachment vote against a sitting Republican president from his own party. Not a backslapper; persuades by sustained explanation rather than political pressure. Tends to underrate the emotional dimension of politics.",
+  "sources": [
+    {
+      "title": "Justin Amash — Twitter vote explanations archive",
+      "url": "https://twitter.com/justinamash",
+      "date": "2024-12-01",
+      "source_type": "social-media",
+      "description": "Annotated public record of his House votes, 2011–2021."
+    },
+    {
+      "title": "Wikipedia — Justin Amash",
+      "url": "https://en.wikipedia.org/wiki/Justin_Amash",
+      "date": "2025-02-10",
+      "source_type": "encyclopedia",
+      "description": "Five-term House service, party transitions (R → I → L), and 2019 impeachment stance."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

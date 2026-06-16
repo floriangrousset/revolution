@@ -174,13 +174,7 @@ function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
-          gap: 30,
-        }}
-      >
+      <div style={{ display: "grid", gap: 36 }}>
         {grouped.map(([partyId, people]) => {
           const meta = parties.find((p) => p.id === partyId);
           const title =
@@ -279,7 +273,13 @@ function Caucus({
           {people.length} seated
         </span>
       </div>
-      <div style={{ display: "grid", gap: 11 }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+          gap: 12,
+        }}
+      >
         {[...head, ...adv, ...asst].map((p) => (
           <PersonaCard key={p.id} p={p} nav={nav} />
         ))}
@@ -290,6 +290,7 @@ function Caucus({
               fontSize: 13,
               padding: 20,
               textAlign: "center",
+              gridColumn: "1 / -1",
             }}
           >
             No agents match.
@@ -304,51 +305,55 @@ function PersonaCard({ p, nav }: { p: PersonaSummary; nav: PersonasProps["nav"] 
   return (
     <Card
       hover
-      pad={15}
+      pad={14}
       onClick={() => nav("personas", p.id)}
       style={{
         display: "flex",
-        gap: 14,
-        alignItems: "center",
+        flexDirection: "column",
+        gap: 10,
         borderLeft: `3px solid ${partyColor(p.party)}`,
+        height: "100%",
       }}
     >
-      <Avatar p={p} size={48} />
-      <div style={{ minWidth: 0, flex: 1 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-          <span
+      <div style={{ display: "flex", gap: 11, alignItems: "center", minWidth: 0 }}>
+        <Avatar p={p} size={40} />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
             className="serif"
             style={{
-              fontSize: 16,
+              fontSize: 14.5,
               fontWeight: 600,
               color: "var(--txt)",
-              whiteSpace: "nowrap",
+              lineHeight: 1.25,
               overflow: "hidden",
               textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
             }}
+            title={p.name}
           >
             {p.name}
-          </span>
-        </div>
-        <div
-          style={{
-            fontSize: 12.5,
-            color: "var(--txt-mute)",
-            marginTop: 2,
-            marginBottom: 8,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {p.title}
-        </div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <RoleTag role={p.role} />
-          <PostureTag posture={p.negotiation_posture} />
+          </div>
+          <div
+            style={{
+              fontSize: 11.5,
+              color: "var(--txt-mute)",
+              marginTop: 2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={p.title}
+          >
+            {p.title}
+          </div>
         </div>
       </div>
-      <Icon name="chevR" size={18} style={{ color: "var(--txt-faint)" }} />
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: "auto" }}>
+        <RoleTag role={p.role} />
+        <PostureTag posture={p.negotiation_posture} />
+      </div>
     </Card>
   );
 }

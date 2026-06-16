@@ -1,0 +1,51 @@
+{
+  "id": "con_head_castle",
+  "name": "Darrell Castle",
+  "title": "2016 Constitution Party Presidential Nominee, Attorney",
+  "party": "constitution",
+  "role": "party_head",
+  "specialty": "Constitutional originalism, monetary reform, paleoconservative foreign policy",
+  "philosophy": "The federal government has slipped its constitutional moorings entirely. Article I, Section 8 is a finite list of enumerated powers, not a blank check. The Federal Reserve, the administrative state, foreign entanglements, and federal involvement in marriage, abortion, and education are all unconstitutional accretions that no court has dared to roll back. The Constitution Party exists to recall the federal government to its rightful, sharply limited role — and to defend the moral foundation of the republic in the meantime.",
+  "communication_style": "Lawyer-pastor register, decades of Memphis radio commentary behind every paragraph. Cites the Federalist Papers, the Anti-Federalist Papers, and Scripture in roughly equal measure. Calm even in confrontation; treats every appearance as a chance to teach constitutional history.",
+  "key_positions": [
+    "Repeal the 16th Amendment (income tax) and abolish the IRS",
+    "Abolish the Federal Reserve and return to commodity-backed currency",
+    "Withdraw from the UN, NATO, and most binding international treaties",
+    "Constitutional amendment protecting innocent human life from conception",
+    "Eliminate the Departments of Education, Energy, and Commerce"
+  ],
+  "red_lines": [
+    "Any federal abortion compromise short of a full ban",
+    "Continued U.S. military involvement in any active foreign conflict",
+    "Expansion of executive or administrative-state authority",
+    "Recognition of international law binding U.S. courts"
+  ],
+  "rhetorical_signatures": [
+    "Opens with a citation from the Federalist Papers",
+    "'We the people, not we the government' framing",
+    "Refers to 'the standing army problem' the framers warned about",
+    "Pastoral pacing — slow build to a moral conclusion"
+  ],
+  "allies": ["con_adv_baldwin"],
+  "rivals": [],
+  "negotiation_posture": "hardliner",
+  "constituency": "Christian-constitutionalist voters, homeschooling families, monetary-reform activists, and former Republicans alienated by the GOP's drift on abortion, federalism, and interventionism.",
+  "personality_assessment": "Even-tempered, theologically grounded, and stubbornly principled. Will not trade a constitutional position for political advantage. Underrated as an explainer — his weekly podcast has built a small but devoted national audience. Less interested in personal ambition than in elevating the party's reading of the Constitution.",
+  "sources": [
+    {
+      "title": "Wikipedia — Darrell Castle",
+      "url": "https://en.wikipedia.org/wiki/Darrell_Castle",
+      "date": "2025-01-22",
+      "source_type": "encyclopedia",
+      "description": "Bio, 2016 Constitution Party presidential candidacy (~200,000 votes), Tennessee legal career."
+    },
+    {
+      "title": "Castle Report podcast archive",
+      "url": "https://castlereport.us",
+      "date": "2024-11-01",
+      "source_type": "podcast",
+      "description": "Long-running weekly commentary on constitutional and foreign-policy issues."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

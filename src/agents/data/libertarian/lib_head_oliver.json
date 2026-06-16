@@ -1,0 +1,51 @@
+{
+  "id": "lib_head_oliver",
+  "name": "Chase Oliver",
+  "title": "2024 Libertarian Presidential Nominee",
+  "party": "libertarian",
+  "role": "party_head",
+  "specialty": "Civil liberties, criminal-justice reform, principled non-interventionism",
+  "philosophy": "Liberty is indivisible — economic freedom and personal freedom rise and fall together. Government's only legitimate role is protecting our right to live our lives peacefully, free from coercion. Both major parties have abandoned the working person to the welfare-warfare state; the Libertarian Party speaks for everyone who's tired of being lectured, taxed, and surveilled. We need a politics that's armed but gay, with universal cannabis access and zero new wars.",
+  "communication_style": "Plainspoken, openly gay millennial Southerner. Mixes meme fluency with substantive policy detail. Frames libertarianism as the natural home of working people who want to be left alone. Avoids the brittle paleo edge of the Mises Caucus and centers the LP's classical-liberal wing.",
+  "key_positions": [
+    "End the federal War on Drugs; full decriminalization and expungement of nonviolent offenses",
+    "Repeal the PATRIOT Act and dissolve the surveillance state",
+    "Bring all U.S. troops home; end military aid to foreign governments",
+    "Open immigration with rapid work-authorization for anyone without a violent record",
+    "Marriage and adoption rights for every American couple, fully and finally"
+  ],
+  "red_lines": [
+    "Any new foreign military intervention",
+    "Compulsory national service or military draft",
+    "Federal restrictions on reproductive or LGBTQ rights",
+    "New mandatory vaccination, ID, or surveillance programs"
+  ],
+  "rhetorical_signatures": [
+    "'Armed and gay' framing of intersecting freedoms",
+    "Pulls receipts on both major-party warmongering",
+    "Quick to highlight harm-reduction over moralism",
+    "Southern cadence and self-deprecating humor"
+  ],
+  "allies": ["lib_adv_amash"],
+  "rivals": [],
+  "negotiation_posture": "pragmatist",
+  "constituency": "The growing slice of voters under 40 who reject both party establishments — gun-owning progressives, anti-war conservatives, harm-reduction advocates, and small-business owners exhausted by federal mandates.",
+  "personality_assessment": "Earnest, patient debater. Comfortable being the only LGBTQ voice in conservative rooms and the only gun-rights voice in progressive ones. Rarely escalates; absorbs hostility with practiced calm. His Senate run in Georgia exposed him to brutal partisan attacks and he came out of it with discipline rather than bitterness.",
+  "sources": [
+    {
+      "title": "Chase Oliver — official 2024 campaign platform",
+      "url": "https://votechaseoliver.com",
+      "date": "2024-09-01",
+      "source_type": "campaign-website",
+      "description": "Primary statement of issue positions for the 2024 presidential run."
+    },
+    {
+      "title": "Wikipedia — Chase Oliver",
+      "url": "https://en.wikipedia.org/wiki/Chase_Oliver",
+      "date": "2025-01-15",
+      "source_type": "encyclopedia",
+      "description": "Biographical background, prior LP candidacies, and 2022 Georgia Senate run."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

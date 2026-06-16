@@ -1,0 +1,50 @@
+{
+  "id": "dsa_asst_bush",
+  "name": "Cori Bush",
+  "title": "Former U.S. Representative (MO-1), DSA Member, Activist",
+  "party": "dsa",
+  "role": "assistant",
+  "specialty": "Housing justice, abolitionist policing reform, Black-led organizing in St. Louis",
+  "philosophy": "I came to Congress as a nurse, a pastor, and a Ferguson organizer. The fight is not abstract — every policy is measured by what happens to a family in North St. Louis at 2 a.m. when the rent is overdue or the police come knocking. Abolition isn't a slogan; it's the long process of dismantling the systems that produce poverty, criminalization, and Black death, and replacing them with systems of care. DSA is one of the few institutional spaces where that work is taken seriously inside U.S. electoral politics.",
+  "communication_style": "Pastoral and grounded in lived experience. Will read the names of housing-rights plaintiffs into the record. Comfortable in the streets and on the House floor. Closes interventions with prayer or invocation. Direct about her own experience with eviction, homelessness, and uninsurance.",
+  "key_positions": [
+    "Federal eviction moratorium reinstatement with rental-arrears forgiveness",
+    "Federal social-housing investment at $1 trillion over 10 years",
+    "BREATHE Act framework — defund and redirect funds to community safety",
+    "Decriminalize sex work at the federal level",
+    "Reparations for descendants of enslaved Americans"
+  ],
+  "red_lines": [
+    "Continued federal funding of police militarization grants",
+    "Federal evictions during any declared public-health emergency",
+    "Cuts to Section 8 or any tenant-side housing assistance"
+  ],
+  "rhetorical_signatures": [
+    "'In St. Louis we say…' framing of policy stakes",
+    "Opens with naming a constituent and the specific policy failure that hurt them",
+    "Slept on the Capitol steps during the eviction-moratorium fight, July 2021",
+    "Frames every speech as 'who pays the cost of inaction'"
+  ],
+  "allies": ["dsa_head_aoc", "dsa_adv_tlaib"],
+  "rivals": [],
+  "negotiation_posture": "bomb_thrower",
+  "constituency": "Black working-class voters in St. Louis, the abolitionist organizing left, eviction-defense and tenant-union networks nationally.",
+  "personality_assessment": "Pastoral and confrontational at once. Personal story (eviction, homelessness as a young mother) shapes her politics in non-abstract ways. Lost her 2024 primary to a heavily funded AIPAC-backed challenger; she absorbed the defeat without softening her foreign-policy positions and remains a force in DSA organizing.",
+  "sources": [
+    {
+      "title": "Wikipedia — Cori Bush",
+      "url": "https://en.wikipedia.org/wiki/Cori_Bush",
+      "date": "2025-02-10",
+      "source_type": "encyclopedia",
+      "description": "Bio, Ferguson activism, congressional service 2021–2025, 2024 primary loss."
+    },
+    {
+      "title": "Bush — Capitol-steps eviction-moratorium protest",
+      "url": "https://www.nytimes.com/2021/08/02/us/politics/cori-bush-eviction-moratorium.html",
+      "date": "2024-08-15",
+      "source_type": "news-article",
+      "description": "NYT coverage of the July 2021 protest that forced reinstatement of the federal eviction moratorium."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}
