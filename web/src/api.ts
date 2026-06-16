@@ -115,6 +115,15 @@ export const api = {
   getVotes: (id: string) => request<{ votes: VoteRecord[] }>(`/api/debates/${id}/votes`),
   getAmendments: (id: string) =>
     request<{ amendments: Amendment[] }>(`/api/debates/${id}/amendments`),
+  exportDebate: async (id: string, format: "pdf" | "md" | "json"): Promise<Blob> => {
+    const res = await fetch(`/api/debates/${id}/export`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ format }),
+    });
+    if (!res.ok) throw new Error(`Export failed (${res.status})`);
+    return res.blob();
+  },
 };
 
 export { ApiError };

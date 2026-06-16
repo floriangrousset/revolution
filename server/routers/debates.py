@@ -2,13 +2,21 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi.responses import Response
 
-from .. import engine
+from .. import engine, exporters
 
 router = APIRouter(prefix="/api/debates", tags=["debates"])
+
+_EXPORT_MEDIA = {
+    "pdf": "application/pdf",
+    "md": "text/markdown; charset=utf-8",
+    "json": "application/json",
+}
 
 
 @router.get("")
@@ -67,3 +75,44 @@ def get_votes(debate_id: str) -> dict[str, list[dict[str, Any]]]:
 @router.get("/{debate_id}/amendments")
 def get_amendments(debate_id: str) -> dict[str, list[dict[str, Any]]]:
     return {"amendments": engine.read_amendments(debate_id)}
+
+
+@router.post("/{debate_id}/export")
+def export_debate(debate_id: str, body: dict[str, Any]) -> Response:
+    fmt = (body.get("format") or "pdf").lower()
+    if fmt not in _EXPORT_MEDIA:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "invalid_format", "message": "format must be pdf, md, or json"},
+        )
+    record = engine.get_debate(debate_id)
+    if record is None:
+        raise HTTPException(status_code=404, detail={"code": "not_found", "message": f"debate {debate_id!r} not found"})
+
+    turns = engine.read_transcript(debate_id)
+    votes = engine.read_votes(debate_id)
+    amendments = engine.read_amendments(debate_id)
+    if fmt == "pdf":
+        payload: bytes = exporters.to_pdf(
+            debate=record, turns=turns, votes=votes, amendments=amendments
+        )
+    elif fmt == "md":
+        payload = exporters.to_markdown(
+            debate=record, turns=turns, votes=votes, amendments=amendments
+        ).encode("utf-8")
+    else:
+        payload = exporters.to_json(
+            debate=record, turns=turns, votes=votes, amendments=amendments
+        ).encode("utf-8")
+
+    filename = _safe_filename(record.get("title", debate_id), fmt)
+    return Response(
+        content=payload,
+        media_type=_EXPORT_MEDIA[fmt],
+        headers={"content-disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+def _safe_filename(title: str, fmt: str) -> str:
+    slug = re.sub(r"[^a-zA-Z0-9._-]+", "_", title.strip()) or "debate"
+    return f"{slug.lower()[:60]}.{fmt}"
