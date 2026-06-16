@@ -4,7 +4,6 @@ import { Btn } from "../components/Btn";
 import { Card, SectionTitle } from "../components/Card";
 import { TextArea } from "../components/Form";
 import { Icon } from "../components/Icon";
-import { Pill } from "../components/Tags";
 import { T, partyBright, partyColor, partyLabel, partyWash } from "../theme";
 import type { PartyEntry } from "../types";
 
@@ -20,56 +19,30 @@ const SAMPLES = [
   "Should the U.S. adopt a Green New Deal framework targeting net-zero by 2040?",
 ];
 
-interface ModelOption {
-  id: string;
-  name: string;
-  tag: string;
-  note: string;
-  cost: string;
-}
-
-const MODELS: ModelOption[] = [
-  {
-    id: "claude-opus-4-8",
-    name: "Claude Opus 4.8",
-    tag: "Highest fidelity",
-    note: "Richest reasoning; recommended for nuanced debate.",
-    cost: "~$0.90 / debate",
-  },
-  {
-    id: "claude-sonnet-4-6",
-    name: "Claude Sonnet 4.6",
-    tag: "Balanced",
-    note: "Fast and cost-efficient; great default.",
-    cost: "~$0.22 / debate",
-  },
-  {
-    id: "claude-haiku-4-5",
-    name: "Claude Haiku 4.5",
-    tag: "Fastest",
-    note: "Quick simulations and dry runs.",
-    cost: "~$0.06 / debate",
-  },
-];
-
 export function Launch({ nav }: LaunchProps) {
   const [text, setText] = useState("");
   const [rounds, setRounds] = useState(2);
-  const [model, setModel] = useState(MODELS[0].id);
   const [temp, setTemp] = useState(0.8);
   const [parties, setParties] = useState<Record<string, boolean>>({
     democrat: true,
     republican: true,
   });
   const [allParties, setAllParties] = useState<PartyEntry[]>([]);
+  const [defaultModel, setDefaultModel] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void api.listParties().then((r) => setAllParties(r.parties));
+    void api
+      .getSettings()
+      .then((s) => {
+        setDefaultModel(s.default_model);
+        if (typeof s.default_temperature === "number") setTemp(s.default_temperature);
+      })
+      .catch(() => null);
   }, []);
 
-  const m = MODELS.find((x) => x.id === model)!;
   const apiCalls = 24 + rounds * 6;
 
   const submit = async () => {
@@ -86,7 +59,6 @@ export function Launch({ nav }: LaunchProps) {
       const resp = await api.createDebate({
         proposal: text.trim(),
         max_rounds: rounds,
-        model,
         temperature: temp,
         parties: chosenParties,
       });
@@ -254,71 +226,28 @@ export function Launch({ nav }: LaunchProps) {
             </div>
           </Card>
 
-          <Card pad={26}>
-            <div className="eyebrow" style={{ marginBottom: 16 }}>
-              Reasoning Model
-            </div>
-            <div style={{ display: "grid", gap: 11 }}>
-              {MODELS.map((mo) => (
-                <button
-                  key={mo.id}
-                  onClick={() => setModel(mo.id)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 14,
-                    padding: "15px 17px",
-                    borderRadius: "var(--r-md)",
-                    textAlign: "left",
-                    background: model === mo.id ? "var(--ink3)" : "var(--ink)",
-                    border: `1px solid ${model === mo.id ? "var(--gold-deep)" : "var(--ink-line)"}`,
-                    transition: "all .15s ease",
-                  }}
+          <Card pad={20}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                fontSize: 12.5,
+                color: "var(--txt-mute)",
+                lineHeight: 1.5,
+              }}
+            >
+              <Icon name="settings" size={16} style={{ color: "var(--gold)", flexShrink: 0 }} />
+              <div>
+                The reasoning model is configured globally in{" "}
+                <a
+                  href="#/settings"
+                  style={{ color: "var(--gold-bright)", textDecoration: "underline" }}
                 >
-                  <span
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: "50%",
-                      border: `2px solid ${model === mo.id ? "var(--gold-bright)" : "var(--ink-line)"}`,
-                      display: "grid",
-                      placeItems: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {model === mo.id && (
-                      <span
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          background: "var(--gold-bright)",
-                        }}
-                      />
-                    )}
-                  </span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                      <span style={{ fontSize: 14.5, fontWeight: 600, color: "var(--txt)" }}>
-                        {mo.name}
-                      </span>
-                      <Pill
-                        color="var(--gold-bright)"
-                        border="var(--gold-deep)"
-                        style={{ fontSize: 10 }}
-                      >
-                        {mo.tag}
-                      </Pill>
-                    </div>
-                    <div style={{ fontSize: 12.5, color: "var(--txt-mute)", marginTop: 3 }}>
-                      {mo.note}
-                    </div>
-                  </div>
-                  <span className="mono" style={{ fontSize: 12, color: "var(--txt-faint)" }}>
-                    {mo.cost}
-                  </span>
-                </button>
-              ))}
+                  Settings
+                </a>
+                . Temperature stays per-debate so you can dial volatility for each motion.
+              </div>
             </div>
           </Card>
         </div>
@@ -380,10 +309,12 @@ export function Launch({ nav }: LaunchProps) {
                 label="Agents seated"
                 value={String(allParties.reduce((acc, p) => acc + p.seats, 0))}
               />
-              <SummaryRow label="Reasoning model" value={m.name} />
+              <SummaryRow
+                label="Reasoning model"
+                value={defaultModel || "from settings"}
+              />
               <SummaryRow label="Debate rounds" value={rounds} />
               <SummaryRow label="Est. API calls" value={`~${apiCalls}`} />
-              <SummaryRow label="Est. cost" value={m.cost} accent />
               <SummaryRow label="Est. runtime" value={`${5 + rounds * 3}–${9 + rounds * 4} min`} />
             </div>
           </Card>

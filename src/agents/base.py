@@ -4,6 +4,25 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, Optional, get_args
 
+
+def _valid_roles() -> list[str]:
+    """Live list of allowed roles (settings.json reference_lists.roles,
+    falling back to the Literal type if the store hasn't been initialized yet)."""
+    try:
+        from src.config import get_reference_list
+        return get_reference_list("roles")
+    except Exception:
+        return list(get_args(Role))
+
+
+def _valid_postures() -> list[str]:
+    """Live list of allowed negotiation postures."""
+    try:
+        from src.config import get_reference_list
+        return get_reference_list("negotiation_postures")
+    except Exception:
+        return list(get_args(NegotiationPosture))
+
 NegotiationPosture = Literal[
     "dealmaker",
     "hardliner",
@@ -85,12 +104,17 @@ class Agent:
     def __post_init__(self) -> None:
         if not isinstance(self.party, str) or not self.party.strip():
             raise ValueError(f"Agent '{self.id}': invalid party {self.party!r}")
-        if self.role not in get_args(Role):
-            raise ValueError(f"Agent '{self.id}': invalid role {self.role!r}")
-        if self.negotiation_posture not in get_args(NegotiationPosture):
+        valid_roles = _valid_roles()
+        if self.role not in valid_roles:
+            raise ValueError(
+                f"Agent '{self.id}': invalid role {self.role!r}; "
+                f"expected one of {valid_roles}"
+            )
+        valid_postures = _valid_postures()
+        if self.negotiation_posture not in valid_postures:
             raise ValueError(
                 f"Agent '{self.id}': invalid negotiation_posture {self.negotiation_posture!r}; "
-                f"expected one of {list(get_args(NegotiationPosture))}"
+                f"expected one of {valid_postures}"
             )
         if not isinstance(self.sources, list):
             raise ValueError(

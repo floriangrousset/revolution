@@ -35,8 +35,10 @@ export interface CreateDebateRequest {
   proposal: string;
   title?: string;
   max_rounds: number;
-  model: string;
-  temperature: number;
+  /** Optional; falls back to Settings.default_model on the server. */
+  model?: string;
+  /** Optional; falls back to Settings.default_temperature on the server. */
+  temperature?: number;
   parties?: string[];
 }
 
@@ -73,6 +75,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
+}
+
+export interface SettingsPayload {
+  default_model: string;
+  default_temperature: number;
+  system_prompts: Record<string, string>;
+  reference_lists: { roles: string[]; negotiation_postures: string[] };
+  api_key_set: boolean;
+  api_key_preview: string;
+  updated_at?: string;
 }
 
 export interface HealthSnapshot {
@@ -143,6 +155,32 @@ export const api = {
   getVotes: (id: string) => request<{ votes: VoteRecord[] }>(`/api/debates/${id}/votes`),
   getAmendments: (id: string) =>
     request<{ amendments: Amendment[] }>(`/api/debates/${id}/amendments`),
+  // settings
+  getSettings: () => request<SettingsPayload>("/api/settings"),
+  updateSettings: (
+    patch: Partial<{
+      anthropic_api_key: string;
+      default_model: string;
+      default_temperature: number;
+      system_prompts: Record<string, string>;
+      reference_lists: { roles?: string[]; negotiation_postures?: string[] };
+    }>,
+  ) =>
+    request<SettingsPayload>("/api/settings", {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  resetPrompt: (name: string) =>
+    request<SettingsPayload>("/api/settings/reset-prompt", {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    }),
+  testApiKey: (api_key?: string) =>
+    request<{ ok: boolean; model?: string; error?: string }>("/api/settings/test-key", {
+      method: "POST",
+      body: JSON.stringify(api_key ? { api_key } : {}),
+    }),
+
   exportDebate: async (id: string, format: "pdf" | "md" | "json"): Promise<Blob> => {
     const res = await fetch(`/api/debates/${id}/export`, {
       method: "POST",

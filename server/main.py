@@ -15,8 +15,16 @@ from fastapi.middleware.cors import CORSMiddleware
 load_dotenv()
 
 from . import db, engine  # noqa: E402  (must follow load_dotenv)
-from .routers import debates, parties, personas, relationships, stream  # noqa: E402
+from .routers import (  # noqa: E402
+    debates,
+    parties,
+    personas,
+    relationships,
+    settings as settings_router,
+    stream,
+)
 from .settings import get_settings  # noqa: E402
+from src.config import get_settings_store  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -42,6 +50,9 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     def _seed() -> None:
         db.ensure_seeded()
+        # First-touch the settings store so data/settings.json is seeded from
+        # .env + Python defaults before any request can read from it.
+        get_settings_store().load()
 
     @app.get("/api/health", tags=["meta"])
     def health() -> dict[str, object]:
@@ -64,6 +75,7 @@ def create_app() -> FastAPI:
     app.include_router(relationships.router)
     app.include_router(debates.router)
     app.include_router(stream.router)
+    app.include_router(settings_router.router)
     return app
 
 

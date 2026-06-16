@@ -1,5 +1,4 @@
 """Node implementations for the negotiation graphs."""
-import os
 from contextvars import ContextVar
 from typing import Any, Literal
 from langchain_anthropic import ChatAnthropic
@@ -53,18 +52,17 @@ def _content_text(response: BaseMessage) -> str:
 def get_model() -> ChatAnthropic:
     """Create the Claude model instance.
 
-    Resolution order: per-run contextvar override → env var → default. Caller
-    can pin `model`/`temperature` per debate via `set_model_overrides()`.
+    Resolution order: per-run contextvar override → settings.json (via the
+    shared `src.config` store) → env var override. The Settings page edits
+    settings.json; the env var still wins for explicit CI overrides.
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY") or ""
-    model_name = (
-        _model_override.get()
-        or os.environ.get("MODEL_NAME")
-        or "claude-sonnet-4-6"
-    )
+    from src.config import get_api_key, get_default_model, get_default_temperature
+
+    api_key = get_api_key()
+    model_name = _model_override.get() or get_default_model()
     temperature = _temperature_override.get()
     if temperature is None:
-        temperature = 0.8
+        temperature = get_default_temperature()
     return ChatAnthropic(
         model_name=model_name,
         api_key=SecretStr(api_key),

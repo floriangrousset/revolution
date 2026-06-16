@@ -232,10 +232,11 @@ def create_debate_record(
     parties: list[str] | None = None,
 ) -> dict[str, Any]:
     """Create the on-disk debate record (status=pending). Returns the record."""
-    settings = get_settings()
+    from src.config import get_default_model, get_default_temperature
+
     debate_id = f"deb_{uuid.uuid4().hex[:8]}"
-    resolved_model = model or settings.model_name
-    resolved_temp = temperature if temperature is not None else 0.8
+    resolved_model = model or get_default_model()
+    resolved_temp = temperature if temperature is not None else get_default_temperature()
     created_at = _now()
     title_resolved = title or _summarize_title(proposal)
     record: dict[str, Any] = {

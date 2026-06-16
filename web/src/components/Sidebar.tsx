@@ -17,6 +17,7 @@ export const NAV: NavItem[] = [
   { route: "personas", icon: "personas", label: "Persona Manager" },
   { route: "parties", icon: "flag", label: "Party Manager" },
   { route: "graph", icon: "graph", label: "Relationship Graph" },
+  { route: "settings", icon: "settings", label: "Settings" },
 ];
 
 export function Sidebar({
