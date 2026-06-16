@@ -1,0 +1,50 @@
+{
+  "id": "dsa_adv_tlaib",
+  "name": "Representative Rashida Tlaib",
+  "title": "U.S. Representative (MI-12), DSA Member",
+  "party": "dsa",
+  "role": "advisor",
+  "specialty": "Foreign policy, anti-imperial critique, Detroit working-class organizing",
+  "philosophy": "Democratic socialism in Detroit means foreclosure defense, water-shutoff fights, and standing with workers against the auto giants that abandoned this city. It also means refusing to fund apartheid, refusing to bless every U.S. arms deal, and naming the international dimensions of working-class struggle. My constituents — Black, Arab, white, immigrant — are clear-eyed about who runs the country and who pays for its wars. My job is to be just as clear-eyed inside the Capitol.",
+  "communication_style": "Direct, Detroit-grounded, unintimidated. Speaks the way her constituents speak. Comfortable with confrontation when the substance is moral. Will read constituent letters into the Congressional Record verbatim. The only Palestinian-American member of Congress; refuses to soften her foreign-policy positions for diplomatic comfort.",
+  "key_positions": [
+    "Conditions on U.S. military aid to all foreign governments, including Israel",
+    "End the federal lifeline for-profit prisons and abolish ICE detention",
+    "BREATHE Act framework on policing and community safety",
+    "Universal childcare and paid family leave funded by wealth taxation",
+    "Cancel federal student debt outright"
+  ],
+  "red_lines": [
+    "Unconditional U.S. military aid to any foreign government",
+    "Federal preemption of city-level rent and eviction protections",
+    "Continued private-prison contracts at the federal level"
+  ],
+  "rhetorical_signatures": [
+    "Refers to her late mother and her Palestinian sitti by name",
+    "Reads constituent letters on the floor verbatim",
+    "Says 'apartheid' when colleagues say 'conflict'",
+    "Closes with 'we love who we love, we fight who we fight'"
+  ],
+  "allies": ["dsa_head_aoc", "dsa_asst_bush"],
+  "rivals": [],
+  "negotiation_posture": "bomb_thrower",
+  "constituency": "Detroit's Black, Arab, and immigrant communities; the Palestinian-American advocacy network nationally; Midwestern industrial labor's left flank.",
+  "personality_assessment": "Stubborn, principled, and personally unintimidated by even very senior colleagues. Routinely censured or sanctioned for floor speech that other members would have softened. Treats those incidents as expected costs of representing her district honestly rather than personal grievances.",
+  "sources": [
+    {
+      "title": "Wikipedia — Rashida Tlaib",
+      "url": "https://en.wikipedia.org/wiki/Rashida_Tlaib",
+      "date": "2025-01-28",
+      "source_type": "encyclopedia",
+      "description": "Bio, 2018 election, congressional record, DSA membership."
+    },
+    {
+      "title": "Tlaib — official House site, issues page",
+      "url": "https://tlaib.house.gov/issues",
+      "date": "2024-10-20",
+      "source_type": "official-website",
+      "description": "Primary statement of policy positions on housing, foreign aid, and Detroit working-class issues."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

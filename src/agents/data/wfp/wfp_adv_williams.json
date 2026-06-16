@@ -1,0 +1,50 @@
+{
+  "id": "wfp_adv_williams",
+  "name": "Jumaane Williams",
+  "title": "New York City Public Advocate, Working Families Party",
+  "party": "wfp",
+  "role": "advisor",
+  "specialty": "Housing justice, policing reform, NYC progressive coalition-building",
+  "philosophy": "I came up as a tenant organizer in East Flatbush. Everything I learned about power, I learned in those buildings. The WFP works because it understands that housing, public safety, and community well-being are the same fight — you can't have safe streets without stable housing, and you can't have stable housing without rent regulation and tenant power. We use the ballot line to make sure those fights have a champion when the Democratic Party would otherwise quietly drop them.",
+  "communication_style": "Brooklyn organizer cadence; comfortable on a stoop, in City Hall, or at a tenant-association meeting. Will name specific buildings, addresses, and tenant plaintiffs. Patient with allies, sharp with bad-faith adversaries. Frequent participant in nonviolent civil-disobedience actions and willing to be arrested for them.",
+  "key_positions": [
+    "Universal rent stabilization in any city with a tight housing market",
+    "End broken-windows policing; redirect resources to mental-health response teams",
+    "Inclusionary zoning with deeper affordability requirements",
+    "City-level tenant right-to-counsel in housing court",
+    "Restorative-justice diversion for nonviolent youth offenses"
+  ],
+  "red_lines": [
+    "Continued expansion of stop-and-frisk or its successors",
+    "Conversion of NYCHA buildings to market-rate housing",
+    "Federal preemption of city tenant-protection laws"
+  ],
+  "rhetorical_signatures": [
+    "References East Flatbush by name in nearly every appearance",
+    "Frames policing through tenant-protection lens",
+    "'I've been arrested for this' as credibility shorthand",
+    "Closes by naming a specific local fight readers can join"
+  ],
+  "allies": ["wfp_head_mitchell"],
+  "rivals": [],
+  "negotiation_posture": "bomb_thrower",
+  "constituency": "NYC tenants, Caribbean-American communities in Brooklyn, the Black-led wing of the city's labor and faith coalitions.",
+  "personality_assessment": "Conviction-driven and personally fearless; routinely on the wrong side of comfortable centrist consensus on public-safety questions. Earned credibility through decades of pre-electoral organizing. Less polished as a major-media surrogate than as a community-meeting presence, where he is exceptional.",
+  "sources": [
+    {
+      "title": "Wikipedia — Jumaane Williams",
+      "url": "https://en.wikipedia.org/wiki/Jumaane_Williams",
+      "date": "2025-02-04",
+      "source_type": "encyclopedia",
+      "description": "Bio, NYC Council service, 2019 Public Advocate election, 2022 gubernatorial primary."
+    },
+    {
+      "title": "NYC Public Advocate — official policy briefs",
+      "url": "https://advocate.nyc.gov/policies",
+      "date": "2024-11-05",
+      "source_type": "official-website",
+      "description": "Williams' policy briefs on housing, policing, and mental-health response."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

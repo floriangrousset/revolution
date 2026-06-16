@@ -260,6 +260,11 @@ function PartyDetail({ id, nav }: { id: string; nav: PartiesProps["nav"] }) {
         motto: draft.motto,
         description: draft.description,
         founded_year: draft.founded_year,
+        history: draft.history,
+        key_policies: draft.key_policies,
+        notable_members: draft.notable_members,
+        national_committee_chair: draft.national_committee_chair,
+        electoral_strength: draft.electoral_strength,
       });
       setParty(updated);
       setDraft(updated);
@@ -498,6 +503,67 @@ function PartyDetail({ id, nav }: { id: string; nav: PartiesProps["nav"] }) {
               <p style={pStyle}>{draft.motto || "No motto recorded."}</p>
             )}
           </Block>
+
+          <Block title="History" icon="scroll">
+            {edit ? (
+              <TextArea
+                value={draft.history || ""}
+                onChange={(e) => set("history", e.target.value)}
+                style={{ minHeight: 160 }}
+                placeholder="A paragraph on origins, realignments, and modern coalition…"
+              />
+            ) : (
+              <p style={pStyle}>{draft.history || "No history recorded yet."}</p>
+            )}
+          </Block>
+
+          <Block title="Key Policies" icon="check">
+            {edit ? (
+              <TextArea
+                value={(draft.key_policies || []).join("\n")}
+                onChange={(e) =>
+                  set(
+                    "key_policies",
+                    e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                  )
+                }
+                style={{ minHeight: 130 }}
+                placeholder="One policy per line"
+              />
+            ) : (draft.key_policies || []).length > 0 ? (
+              <ul style={listStyle}>
+                {draft.key_policies!.map((p, i) => (
+                  <li key={i} style={liStyle}>{p}</li>
+                ))}
+              </ul>
+            ) : (
+              <p style={pStyle}>No key policies recorded.</p>
+            )}
+          </Block>
+
+          <Block title="Notable Members" icon="personas">
+            {edit ? (
+              <TextArea
+                value={(draft.notable_members || []).join("\n")}
+                onChange={(e) =>
+                  set(
+                    "notable_members",
+                    e.target.value.split("\n").map((s) => s.trim()).filter(Boolean),
+                  )
+                }
+                style={{ minHeight: 110 }}
+                placeholder="One member per line — current or historical"
+              />
+            ) : (draft.notable_members || []).length > 0 ? (
+              <ul style={listStyle}>
+                {draft.notable_members!.map((m, i) => (
+                  <li key={i} style={liStyle}>{m}</li>
+                ))}
+              </ul>
+            ) : (
+              <p style={pStyle}>No notable members recorded.</p>
+            )}
+          </Block>
         </div>
 
         <div style={{ display: "grid", gap: 22, alignContent: "start" }}>
@@ -569,7 +635,40 @@ function PartyDetail({ id, nav }: { id: string; nav: PartiesProps["nav"] }) {
                     : "Unknown"}
                 </span>
               } />
+              <KV
+                label="National Chair"
+                value={
+                  edit ? (
+                    <TextInput
+                      value={draft.national_committee_chair || ""}
+                      onChange={(e) =>
+                        set("national_committee_chair", e.target.value)
+                      }
+                      placeholder="e.g. Jaime Harrison (DNC)"
+                    />
+                  ) : (
+                    <span style={pStyle}>
+                      {draft.national_committee_chair || "Not recorded."}
+                    </span>
+                  )
+                }
+              />
             </div>
+          </Block>
+
+          <Block title="Electoral Strength" icon="results">
+            {edit ? (
+              <TextArea
+                value={draft.electoral_strength || ""}
+                onChange={(e) => set("electoral_strength", e.target.value)}
+                style={{ minHeight: 90 }}
+                placeholder="Federal seats, governorships, ballot access…"
+              />
+            ) : (
+              <p style={pStyle}>
+                {draft.electoral_strength || "No footprint recorded."}
+              </p>
+            )}
           </Block>
 
           <Block title={`Seated personas (${seated.length})`} icon="personas">
@@ -646,6 +745,19 @@ const pStyle: CSSProperties = {
   color: "var(--txt-mute)",
   lineHeight: 1.65,
   margin: 0,
+};
+
+const listStyle: CSSProperties = {
+  margin: 0,
+  paddingLeft: 18,
+  display: "grid",
+  gap: 6,
+};
+
+const liStyle: CSSProperties = {
+  fontSize: 14,
+  color: "var(--txt-mute)",
+  lineHeight: 1.55,
 };
 
 function Block({

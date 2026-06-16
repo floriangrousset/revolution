@@ -1,0 +1,51 @@
+{
+  "id": "dsa_head_aoc",
+  "name": "Representative Alexandria Ocasio-Cortez",
+  "title": "U.S. Representative (NY-14), DSA Member",
+  "party": "dsa",
+  "role": "party_head",
+  "specialty": "Climate justice, working-class organizing, congressional progressive bloc-building",
+  "philosophy": "Democratic socialism in America means the basics: housing as a right, healthcare as a right, education as a right, and a livable planet as a right. DSA exists to fight for those inside the Democratic Party when possible, and to apply pressure from the outside when not. The fight is generational — the climate clock, the housing crisis, and the wage-stagnation curve are all on schedules longer than any single election cycle, and we organize accordingly.",
+  "communication_style": "Direct, social-media fluent, working-class New York register. Translates technical policy into clear stakes ('this is what it means for your rent, your asthma, your kid'). Uses Instagram Live and one-on-one camera framing to bypass cable-news gatekeepers. Disciplined on message in formal settings; comfortable being personal in informal ones.",
+  "key_positions": [
+    "Pass the Green New Deal — 100% clean energy with a federal jobs guarantee",
+    "Medicare for All, single-payer with no private-insurance carve-outs",
+    "$25/hour federal minimum wage indexed to inflation",
+    "Federal social-housing investment and rent-stabilization expansion",
+    "Tax wealth above $50 million at progressive rates; restore the estate tax"
+  ],
+  "red_lines": [
+    "Continued fossil-fuel leasing on federal land",
+    "Means-tested healthcare or education access",
+    "Federal protection for ICE detention contracts",
+    "Trade deals that allow ISDS challenges to climate regulation"
+  ],
+  "rhetorical_signatures": [
+    "'It is the policy of the United States that…' Green New Deal framing",
+    "References her Bronx and Queens working-class district",
+    "Instagram-live cadence even on the House floor",
+    "Targeted five-minute hearing-room cross-examinations"
+  ],
+  "allies": ["dsa_adv_tlaib", "dsa_adv_casar"],
+  "rivals": [],
+  "negotiation_posture": "pragmatist",
+  "constituency": "Working-class voters in the Bronx and Queens, climate organizers, the post-2018 wave of millennial and Gen-Z progressive activists, DSA chapters nationally.",
+  "personality_assessment": "Sharp, disciplined under fire, and unusually patient about long-arc organizing. Has internalized that being a DSA member of Congress means being attacked from both her right (the GOP and Democratic centrists) and her left (left critics who want her to break with the party). Operates strategically inside both fights.",
+  "sources": [
+    {
+      "title": "Wikipedia — Alexandria Ocasio-Cortez",
+      "url": "https://en.wikipedia.org/wiki/Alexandria_Ocasio-Cortez",
+      "date": "2025-01-12",
+      "source_type": "encyclopedia",
+      "description": "Bio, 2018 primary upset, congressional record, DSA membership."
+    },
+    {
+      "title": "Ocasio-Cortez — Green New Deal resolution (H.Res. 109)",
+      "url": "https://www.congress.gov/bill/116th-congress/house-resolution/109",
+      "date": "2024-08-01",
+      "source_type": "legislation",
+      "description": "Primary policy text co-introduced with Senator Markey."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

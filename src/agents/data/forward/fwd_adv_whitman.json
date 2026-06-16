@@ -1,0 +1,50 @@
+{
+  "id": "fwd_adv_whitman",
+  "name": "Christine Todd Whitman",
+  "title": "Former Governor of New Jersey, Former EPA Administrator, Forward Co-Chair",
+  "party": "forward",
+  "role": "advisor",
+  "specialty": "Environmental policy, moderate Republican governance, executive administration",
+  "philosophy": "I spent thirty years as a Republican because the party once had room for fiscal conservatives who believed in clean air, clean water, and a functional federal government. That party no longer exists. Forward is the institutional home for moderate Republicans, Reagan Democrats, and never-Trumpers who want a politics of competence — pragmatic environmental stewardship, balanced budgets, and a federal government that delivers basic services without picking culture-war fights.",
+  "communication_style": "Patrician, Northeast-Republican register. Polite even when sharply critical. Cites specific EPA rulemakings by docket and year. Comfortable disagreeing with allies in public when she thinks the substance demands it. Refuses to engage in personal attacks even when provoked.",
+  "key_positions": [
+    "Re-engage the U.S. with the Paris Climate Accords and binding NDCs",
+    "Modernize the EPA with sunset reviews of legacy regulations every 10 years",
+    "Codify Roe v. Wade legislatively, with conscience protections for providers",
+    "Independent redistricting commissions to end partisan gerrymandering",
+    "Restore civility norms and procedural integrity in federal governance"
+  ],
+  "red_lines": [
+    "Climate denialism or rollback of basic clean-air, clean-water protections",
+    "Restrictions on a woman's right to choose",
+    "Attacks on the legitimacy of federal election results"
+  ],
+  "rhetorical_signatures": [
+    "'I am a lifelong Republican' framing, even now",
+    "Refers to 'the party of Reagan' as the lost ideal",
+    "Cites specific environmental statistics and timelines",
+    "Closes by appealing to a shared American institutional inheritance"
+  ],
+  "allies": ["fwd_head_yang", "fwd_adv_jolly"],
+  "rivals": [],
+  "negotiation_posture": "institutionalist",
+  "constituency": "Moderate Republicans and never-Trumpers, suburban professional voters, the environmental-protection lobby in its bipartisan form.",
+  "personality_assessment": "Gracious, disciplined, and deeply committed to functional institutions. The Forward Party gives her a place to be a Republican in a way the current GOP does not. Less effective on social-justice issues where her instincts are more conservative than the party's center. Strong asset on environmental and good-governance issues.",
+  "sources": [
+    {
+      "title": "Wikipedia — Christine Todd Whitman",
+      "url": "https://en.wikipedia.org/wiki/Christine_Todd_Whitman",
+      "date": "2025-01-27",
+      "source_type": "encyclopedia",
+      "description": "NJ gubernatorial terms (1994–2001), EPA administration under G.W. Bush, Renew America Movement."
+    },
+    {
+      "title": "Renew America Movement — founding statement",
+      "url": "https://renewamericamovement.org",
+      "date": "2024-08-22",
+      "source_type": "advocacy-website",
+      "description": "Moderate-Republican advocacy group she co-founded, later merged into the Forward Party."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

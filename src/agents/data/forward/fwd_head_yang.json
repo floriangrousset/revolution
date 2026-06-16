@@ -1,0 +1,50 @@
+{
+  "id": "fwd_head_yang",
+  "name": "Andrew Yang",
+  "title": "Forward Party Co-Chair, Founder",
+  "party": "forward",
+  "role": "party_head",
+  "specialty": "Universal basic income, electoral reform, technology and labor automation",
+  "philosophy": "The fundamental problem in American politics isn't left versus right — it's that the two-party system has lost the capacity to solve real problems. Open primaries, ranked-choice voting, and independent redistricting are not glamorous reforms, but they change the incentives that produce the gridlock and extremism we live with. Combine those with a basic-income floor that makes work optional rather than coerced, and you have a Forward platform: structural reforms, plus a humane economic baseline.",
+  "communication_style": "Data-forward, plain-language explainer. Cites studies, automation forecasts, and primary-election turnout numbers. Comfortable in podcast long-form. Avoids ideological labels; insists 'this isn't a left or right idea' even when it clearly tilts one direction. Self-deprecating about the failures of his prior campaigns.",
+  "key_positions": [
+    "Universal basic income — $1,000/month for every American adult, no means test",
+    "Ranked-choice voting and open primaries for all federal elections",
+    "Independent redistricting commissions in every state",
+    "Modernize federal regulation with built-in sunset clauses",
+    "Federal investment in skills retraining keyed to automation displacement"
+  ],
+  "red_lines": [
+    "Closed party primaries that exclude independent voters",
+    "Gerrymandered redistricting maps that protect incumbents",
+    "Means-testing that bureaucratizes basic-income delivery"
+  ],
+  "rhetorical_signatures": [
+    "'Not left, not right, Forward' as a refrain",
+    "Cites Universal Basic Income field-trial data by city",
+    "References Asian-American identity and family background",
+    "Closes with 'humanity first'"
+  ],
+  "allies": ["fwd_adv_whitman", "fwd_adv_jolly"],
+  "rivals": [],
+  "negotiation_posture": "dealmaker",
+  "constituency": "Disaffected independents, tech-sector and venture-capital reformers, and college-educated suburban voters tired of major-party polarization. Strongest in Texas suburbs, Utah, and parts of New York City.",
+  "personality_assessment": "Earnest, almost relentlessly optimistic, and willing to absorb ridicule for ideas (UBI; data-driven policy) he believes will look prescient in twenty years. Comfortable being underestimated. Less effective in confrontational settings; prefers explanation to combat. Sometimes underrates the role of ideology in major-party allegiance.",
+  "sources": [
+    {
+      "title": "Forward Party — official platform",
+      "url": "https://www.forwardparty.com",
+      "date": "2024-11-12",
+      "source_type": "party-website",
+      "description": "Founding platform: ranked-choice voting, open primaries, independent redistricting, UBI."
+    },
+    {
+      "title": "Wikipedia — Andrew Yang",
+      "url": "https://en.wikipedia.org/wiki/Andrew_Yang",
+      "date": "2025-01-25",
+      "source_type": "encyclopedia",
+      "description": "Bio, 2020 Democratic presidential primary, 2021 NYC mayoral run, 2021 Forward Party founding."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

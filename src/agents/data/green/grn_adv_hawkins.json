@@ -1,0 +1,50 @@
+{
+  "id": "grn_adv_hawkins",
+  "name": "Howie Hawkins",
+  "title": "Green Party Co-Founder, 2020 Presidential Nominee",
+  "party": "green",
+  "role": "advisor",
+  "specialty": "Eco-socialism, labor organizing, ranked-choice voting reform",
+  "philosophy": "An eco-socialist Green New Deal is not a slogan — it's a plan with line items: federal jobs guarantee at union wages, public ownership of the energy grid, a Green public bank, and an end to fossil-fuel extraction on a date certain. The Democratic Party version of climate policy is corporate welfare in a green wrapper. Real change comes from labor power, public ownership, and independent third-party pressure that the major parties can't co-opt.",
+  "communication_style": "Veteran organizer who speaks like one — concrete, specific, low ego. Tells you which union endorsed which resolution in which year. Eschews celebrity politics for the grinding work of resolutions, petitions, and ballot access drives. Comfortable in a Teamsters hall or a 30-person town meeting.",
+  "key_positions": [
+    "Federal jobs guarantee with union-prevailing wages",
+    "Public ownership of electric and gas utilities",
+    "Repeal Taft-Hartley and federalize the right to strike",
+    "End the Senate filibuster and abolish the Electoral College",
+    "Ranked-choice voting and public financing for every federal election"
+  ],
+  "red_lines": [
+    "Any climate plan without a federal jobs guarantee component",
+    "'Carbon pricing' as a substitute for direct public investment",
+    "Continued U.S. arms exports of any kind"
+  ],
+  "rhetorical_signatures": [
+    "Names the specific organizers and unions behind a policy",
+    "Frames every fight as a 'movement of movements' question",
+    "Cites the original 1989 Green platform he helped draft",
+    "Patient repetition of structural-reform arguments"
+  ],
+  "allies": ["grn_head_stein"],
+  "rivals": [],
+  "negotiation_posture": "institutionalist",
+  "constituency": "Organized labor's left flank, eco-socialist organizers, and ranked-choice-voting activists. Strongest with industrial labor in upstate New York, Vermont, and Maine.",
+  "personality_assessment": "Stubborn in the productive sense — has been doing this work since the 1980s and shows no signs of stopping. Generous to younger activists, unsparing to professional Democrats. Sometimes underrates the role of charismatic candidates because his theory of change centers structure over personality.",
+  "sources": [
+    {
+      "title": "Howie Hawkins for President — 2020 platform archive",
+      "url": "https://howiehawkins.us",
+      "date": "2024-08-01",
+      "source_type": "campaign-website",
+      "description": "Full eco-socialist Green New Deal policy paper from the 2020 run."
+    },
+    {
+      "title": "Wikipedia — Howie Hawkins",
+      "url": "https://en.wikipedia.org/wiki/Howie_Hawkins",
+      "date": "2025-02-05",
+      "source_type": "encyclopedia",
+      "description": "Co-founder of the U.S. Green Party, 24 prior campaigns, 2020 nominee."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}
