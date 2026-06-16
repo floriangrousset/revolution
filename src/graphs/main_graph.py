@@ -184,7 +184,9 @@ def build_main_graph(display_callback: Optional[Callable] = None):
 async def run_negotiation(
     proposal_text: str,
     max_rounds: int = 5,
-    display_callback: Optional[Callable] = None
+    display_callback: Optional[Callable] = None,
+    model: Optional[str] = None,
+    temperature: Optional[float] = None,
 ) -> NegotiationState:
     """Run a full negotiation on a proposal.
 
@@ -192,10 +194,15 @@ async def run_negotiation(
         proposal_text: The proposal text from the user
         max_rounds: Maximum negotiation rounds
         display_callback: Optional callback for displaying messages
+        model: Optional Claude model id to override the env default.
+        temperature: Optional temperature in [0, 1] to override the engine default.
 
     Returns:
         Final NegotiationState with results
     """
+    from .nodes import set_model_overrides
+    set_model_overrides(model=model, temperature=temperature)
+
     graph = build_main_graph(display_callback)
 
     proposal = Proposal.from_user_input(proposal_text)

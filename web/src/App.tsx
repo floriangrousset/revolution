@@ -3,10 +3,12 @@ import { api } from "./api";
 import { DisclaimerBar } from "./components/DisclaimerBar";
 import { Sidebar } from "./components/Sidebar";
 import { useHashRoute } from "./hooks";
+import { ArenaWaiting } from "./screens/ArenaWaiting";
 import { Dashboard } from "./screens/Dashboard";
 import { Graph } from "./screens/Graph";
+import { Launch } from "./screens/Launch";
 import { Personas } from "./screens/Personas";
-import { Placeholder } from "./screens/Placeholder";
+import { Results } from "./screens/Results";
 
 export function App() {
   const [{ route, param }, nav] = useHashRoute();
@@ -27,37 +29,13 @@ export function App() {
       Screen = <Personas nav={nav} param={param} />;
       break;
     case "launch":
-      Screen = (
-        <Placeholder
-          eyebrow="Convene the Floor"
-          title="Launch a Debate"
-          description="Submit a proposal, set the terms of deliberation, and the chamber will form positions, debate across the aisle, and vote."
-          comingIn="Wires up in M3."
-          nav={nav}
-        />
-      );
+      Screen = <Launch nav={nav} />;
       break;
     case "arena":
-      Screen = (
-        <Placeholder
-          eyebrow="Live Deliberation"
-          title="The Arena"
-          description="The legislative chamber hemicycle — agents speak in turn, seats light up, votes tally in real time."
-          comingIn="Lights up in M4 with live SSE streaming."
-          nav={nav}
-        />
-      );
+      Screen = <ArenaWaiting nav={nav} param={param} />;
       break;
     case "results":
-      Screen = (
-        <Placeholder
-          eyebrow="Resolution"
-          title="Vote Breakdown"
-          description="Full breakdown, persuasion timeline, transcript, amendments, and export."
-          comingIn="Available in M3 once debates run."
-          nav={nav}
-        />
-      );
+      Screen = <Results nav={nav} param={param} />;
       break;
     case "graph":
       Screen = <Graph nav={nav} />;
