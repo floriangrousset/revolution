@@ -10,6 +10,7 @@ import { Launch } from "./screens/Launch";
 import { Parties } from "./screens/Parties";
 import { Personas } from "./screens/Personas";
 import { Results } from "./screens/Results";
+import { Settings } from "./screens/Settings";
 
 export function App() {
   const [{ route, param }, nav] = useHashRoute();
@@ -46,6 +47,9 @@ export function App() {
       break;
     case "graph":
       Screen = <Graph nav={nav} />;
+      break;
+    case "settings":
+      Screen = <Settings nav={nav} />;
       break;
     default:
       Screen = <Dashboard nav={nav} />;
