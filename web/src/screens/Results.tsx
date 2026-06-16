@@ -48,6 +48,30 @@ export function Results({ nav, param }: ResultsProps) {
   const [tab, setTab] = useState<Tab>("overview");
   const [error, setError] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [showDelete, setShowDelete] = useState(false);
+
+  const persistTitle = async () => {
+    setEditingTitle(false);
+    if (!debate || !titleDraft.trim() || titleDraft.trim() === debate.title) return;
+    try {
+      const updated = await api.updateDebate(debate.id, { title: titleDraft.trim() });
+      setDebate(updated);
+    } catch (e) {
+      setError(String((e as Error).message || e));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!debate) return;
+    try {
+      await api.deleteDebate(debate.id);
+      nav("dashboard");
+    } catch (e) {
+      setError(String((e as Error).message || e));
+    }
+  };
 
   // Initial fetch + auto-refresh while the debate is still running.
   useEffect(() => {
@@ -222,12 +246,54 @@ export function Results({ nav, param }: ResultsProps) {
                 {debate.config.max_rounds > 1 ? "s" : ""} · {debate.config.model}
               </span>
             </div>
-            <h1
-              className="serif"
-              style={{ fontSize: 28, fontWeight: 600, margin: "0 0 8px", maxWidth: 640, lineHeight: 1.15 }}
-            >
-              {debate.title}
-            </h1>
+            {editingTitle ? (
+              <input
+                value={titleDraft}
+                autoFocus
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onBlur={() => void persistTitle()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") void persistTitle();
+                  if (e.key === "Escape") {
+                    setTitleDraft(debate.title);
+                    setEditingTitle(false);
+                  }
+                }}
+                style={{
+                  fontFamily: "var(--serif)",
+                  fontSize: 28,
+                  fontWeight: 600,
+                  width: "100%",
+                  maxWidth: 640,
+                  background: "var(--ink)",
+                  border: "1px solid var(--gold-deep)",
+                  borderRadius: "var(--r-md)",
+                  color: "var(--txt)",
+                  padding: "4px 10px",
+                  margin: "0 0 8px",
+                  outline: "none",
+                }}
+              />
+            ) : (
+              <h1
+                className="serif"
+                style={{
+                  fontSize: 28,
+                  fontWeight: 600,
+                  margin: "0 0 8px",
+                  maxWidth: 640,
+                  lineHeight: 1.15,
+                  cursor: "text",
+                }}
+                title="Click to rename"
+                onClick={() => {
+                  setTitleDraft(debate.title);
+                  setEditingTitle(true);
+                }}
+              >
+                {debate.title}
+              </h1>
+            )}
             <p style={{ fontSize: 14, color: "var(--txt-mute)", maxWidth: 660, lineHeight: 1.6, margin: 0 }}>
               {debate.proposal}
             </p>
@@ -235,6 +301,9 @@ export function Results({ nav, param }: ResultsProps) {
           <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
             <Btn kind="primary" icon="download" onClick={() => setExportOpen(true)}>
               Export
+            </Btn>
+            <Btn kind="danger" icon="x" onClick={() => setShowDelete(true)}>
+              Delete
             </Btn>
           </div>
         </div>
@@ -352,6 +421,61 @@ export function Results({ nav, param }: ResultsProps) {
         debateId={debate.id}
         debateTitle={debate.title}
       />
+
+      {showDelete && (
+        <div
+          onClick={() => setShowDelete(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 200,
+            background: "rgba(5,10,18,0.72)",
+            backdropFilter: "blur(6px)",
+            display: "grid",
+            placeItems: "center",
+            padding: 24,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="ink-panel rise"
+            style={{ width: 420, padding: "22px 24px" }}
+          >
+            <div className="eyebrow" style={{ marginBottom: 8, color: "var(--reject)" }}>
+              Remove debate
+            </div>
+            <div className="serif" style={{ fontSize: 19, fontWeight: 600, marginBottom: 12 }}>
+              Delete “{debate.title}”?
+            </div>
+            <p
+              style={{
+                fontSize: 13.5,
+                color: "var(--txt-mute)",
+                lineHeight: 1.6,
+                margin: 0,
+              }}
+            >
+              Transcript, votes, amendments, and the dashboard row are permanently removed.
+              This cannot be undone.
+            </p>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 10,
+                marginTop: 18,
+              }}
+            >
+              <Btn kind="ghost" onClick={() => setShowDelete(false)}>
+                Cancel
+              </Btn>
+              <Btn kind="danger" icon="x" onClick={handleDelete}>
+                Delete debate
+              </Btn>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

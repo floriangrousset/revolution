@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { api } from "./api";
 import { DisclaimerBar } from "./components/DisclaimerBar";
 import { Sidebar } from "./components/Sidebar";
@@ -13,15 +13,8 @@ import { Results } from "./screens/Results";
 
 export function App() {
   const [{ route, param }, nav] = useHashRoute();
-  const [model, setModel] = useState<string | undefined>();
 
   useEffect(() => {
-    void api
-      .health()
-      .then((h) => setModel(h.model))
-      .catch(() => {
-        /* server might still be starting; sidebar shows the default */
-      });
     // Hydrate the party-color registry early so theme.partyColor() &c. can
     // resolve custom parties (libertarian, green, …) anywhere in the app.
     void api.listParties().then((r) => setPartyRegistry(r.parties));
@@ -60,7 +53,7 @@ export function App() {
 
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
-      <Sidebar route={route} nav={nav} model={model} />
+      <Sidebar route={route} nav={nav} />
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
         <div id="screen" style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
           {Screen}

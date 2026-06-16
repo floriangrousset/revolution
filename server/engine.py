@@ -134,6 +134,38 @@ def read_amendments(debate_id: str) -> list[dict[str, Any]]:
         return json.load(f).get("amendments", [])
 
 
+def update_debate_title(debate_id: str, title: str) -> dict[str, Any]:
+    """Rename a debate. The only mutable field on an already-running record."""
+    record = get_debate(debate_id)
+    if record is None:
+        raise KeyError(debate_id)
+    record["title"] = title
+    _atomic_write_json(_debate_dir(debate_id) / "debate.json", record)
+    _patch_index(debate_id, title=title)
+    return record
+
+
+def delete_debate(debate_id: str) -> bool:
+    """Remove a debate's directory and its index row. Returns False if missing.
+
+    Note: this does NOT cancel an in-flight run. The asyncio task will keep
+    running in the background; its writes will be lost since the directory
+    has been deleted. Stopping a debate cleanly is a future feature.
+    """
+    debate_dir = _debate_dir(debate_id)
+    if not (debate_dir / "debate.json").exists():
+        return False
+    import shutil
+    try:
+        shutil.rmtree(debate_dir)
+    except OSError as e:
+        log.warning("failed to delete debate dir %s: %s", debate_dir, e)
+        return False
+    entries = [e for e in _read_index() if e["id"] != debate_id]
+    _write_index(entries)
+    return True
+
+
 def _atomic_write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(path.suffix + ".tmp")
@@ -260,6 +292,14 @@ async def run_debate(debate_id: str) -> None:
     broadcaster.publish(debate_id, Event.phase("intro"))
 
     turn_counter = {"i": 0}
+    # `first_votes` captures each agent's INITIAL vote (from the new
+    # `initial_voting` graph node, before the cross-party debate). The
+    # `previous_votes` running map is what each subsequent vote is compared
+    # against on the fly so SSE `vote_change` events fire correctly. At the
+    # end of the run, the persisted votes.json compares each final Vote
+    # against `first_votes` so the Persuasion Timeline shows the initial →
+    # final delta.
+    first_votes: dict[str, str] = {}
     previous_votes: dict[str, str] = {}
     phase_state: dict[str, str | None] = {"current": None}
     transcript_path = _debate_dir(debate_id) / "transcript.jsonl"
@@ -290,6 +330,9 @@ async def run_debate(debate_id: str) -> None:
             broadcaster.publish(debate_id, Event.turn_end(payload))
             asyncio.run_coroutine_threadsafe(append_transcript_line(payload), loop)
         elif isinstance(item, Vote):
+            # Capture the first vote per agent — this is the "initial position"
+            # used for the persuasion delta.
+            first_votes.setdefault(item.agent_id, item.vote)
             payload = _serialize_vote(item, previous=previous_votes)
             if payload["changed"] and payload.get("from"):
                 broadcaster.publish(
@@ -325,12 +368,13 @@ async def run_debate(debate_id: str) -> None:
     if result.get("final_result") == "amended":
         final_status = "amended"
 
-    # Persist votes (post-deliberation final tally; we serialize the live Vote
-    # objects, marking `changed=true` when the final differs from the first
-    # observation captured during streaming).
+    # Persist votes — serialize each FINAL vote against the agent's FIRST vote
+    # so `changed` / `from` reflect the persuasion delta. (Re-using
+    # `previous_votes` here was the M5 bug — by this point it equals the final
+    # vote per agent and `changed` is always False.)
     votes_payload: list[dict[str, Any]] = []
     for v in list(rep_votes) + list(dem_votes):
-        votes_payload.append(_serialize_vote(v, previous=previous_votes))
+        votes_payload.append(_serialize_vote(v, previous=first_votes))
     _atomic_write_json(
         _debate_dir(debate_id) / "votes.json",
         {"votes": votes_payload},
