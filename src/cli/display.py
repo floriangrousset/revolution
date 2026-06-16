@@ -127,7 +127,12 @@ class NegotiationDisplay:
         )
 
     def show_voting_results(self, result: VotingResult):
-        """Display voting results table."""
+        """Display voting results table.
+
+        Renders one row per participating party using the dict-keyed
+        `result.by_party`. Falls back to the legacy D+R rows when the new
+        field is empty (older callers that constructed VotingResult by hand).
+        """
         self.console.print()
 
         table = Table(title="[bold]Voting Results[/bold]", box=ROUNDED)
@@ -136,18 +141,30 @@ class NegotiationDisplay:
         table.add_column("Oppose", style="red", justify="center")
         table.add_column("Abstain", style="yellow", justify="center")
 
-        table.add_row(
-            "[red]Republican[/red]",
-            str(result.republican_support),
-            str(result.republican_oppose),
-            str(result.republican_abstain)
-        )
-        table.add_row(
-            "[blue]Democrat[/blue]",
-            str(result.democrat_support),
-            str(result.democrat_oppose),
-            str(result.democrat_abstain)
-        )
+        if result.by_party:
+            for party, counts in result.by_party.items():
+                color = self.party_colors.get(party, "cyan")
+                label = f"[{color}]{party.capitalize()}[/{color}]"
+                table.add_row(
+                    label,
+                    str(counts["support"]),
+                    str(counts["oppose"]),
+                    str(counts["abstain"]),
+                )
+        else:
+            table.add_row(
+                "[red]Republican[/red]",
+                str(result.republican_support),
+                str(result.republican_oppose),
+                str(result.republican_abstain),
+            )
+            table.add_row(
+                "[blue]Democrat[/blue]",
+                str(result.democrat_support),
+                str(result.democrat_oppose),
+                str(result.democrat_abstain),
+            )
+
         table.add_row(
             "[bold]TOTAL[/bold]",
             f"[bold]{result.total_support}[/bold]",

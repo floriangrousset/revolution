@@ -8,7 +8,7 @@ from typing import Any
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import Response
 
-from .. import engine, exporters
+from .. import db, engine, exporters
 
 router = APIRouter(prefix="/api/debates", tags=["debates"])
 
@@ -33,13 +33,36 @@ async def create_debate(body: dict[str, Any], background_tasks: BackgroundTasks)
     if not 1 <= max_rounds <= 5:
         raise HTTPException(status_code=422, detail={"code": "out_of_range", "message": "max_rounds must be 1..5"})
 
+    parties = body.get("parties")
+    if parties is not None:
+        if not isinstance(parties, list) or not all(isinstance(p, str) and p for p in parties):
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "invalid", "message": "parties must be a list of party ids"},
+            )
+        if len(parties) < 2:
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "invalid", "message": "at least two parties are required"},
+            )
+        known = {p["id"] for p in db.list_parties()}
+        unknown = [p for p in parties if p not in known]
+        if unknown:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "unknown_party",
+                    "message": f"unknown party ids: {', '.join(unknown)}",
+                },
+            )
+
     record = engine.create_debate_record(
         proposal=proposal,
         title=body.get("title"),
         max_rounds=max_rounds,
         model=body.get("model"),
         temperature=body.get("temperature"),
-        parties=body.get("parties"),
+        parties=parties,
     )
 
     # Kick off the debate as a fire-and-forget asyncio task. This keeps the

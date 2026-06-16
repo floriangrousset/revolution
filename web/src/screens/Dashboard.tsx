@@ -36,7 +36,15 @@ export function Dashboard({ nav }: DashboardProps) {
     <div style={{ maxWidth: 1180, margin: "0 auto", padding: "34px 40px 60px" }}>
       <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 24, marginBottom: 30 }}>
         <div className="ink-panel" style={{ padding: "34px 36px", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", right: -40, top: -40, opacity: 0.06 }}>
+          <div
+            style={{
+              position: "absolute",
+              right: -40,
+              top: -40,
+              opacity: 0.06,
+              pointerEvents: "none",
+            }}
+          >
             <Seal size={260} />
           </div>
           <div className="eyebrow" style={{ marginBottom: 14 }}>

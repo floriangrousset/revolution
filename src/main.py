@@ -58,14 +58,18 @@ async def run_interactive_session(display: NegotiationDisplay):
         )
 
         # Show final voting breakdown
-        voting_result = determine_final_result(
-            result.get("republican_votes", []),
-            result.get("democrat_votes", [])
-        )
+        votes_by_party = dict(result.get("votes_by_party") or {})
+        # Back-fill from the legacy per-party fields for older shapes.
+        if not votes_by_party.get("republican") and result.get("republican_votes"):
+            votes_by_party["republican"] = result["republican_votes"]
+        if not votes_by_party.get("democrat") and result.get("democrat_votes"):
+            votes_by_party["democrat"] = result["democrat_votes"]
+
+        voting_result = determine_final_result(votes_by_party)
 
         display.show_phase("Final Voting Results", "neutral")
-        display.show_party_votes(result.get("republican_votes", []), "republican")
-        display.show_party_votes(result.get("democrat_votes", []), "democrat")
+        for party in result.get("parties") or list(votes_by_party.keys()):
+            display.show_party_votes(votes_by_party.get(party, []), party)
         display.show_voting_results(voting_result)
         display.show_final_result(voting_result)
         display.show_amendments(result.get("amendments_proposed", []))

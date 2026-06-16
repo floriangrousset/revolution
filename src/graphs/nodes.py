@@ -7,8 +7,7 @@ from pydantic import SecretStr
 
 from ..state.types import PartyState, NegotiationState, AgentMessage, Vote
 from ..agents.base import Agent
-from ..agents.republican import REPUBLICAN_AGENTS
-from ..agents.democrat import DEMOCRAT_AGENTS
+from ..agents.loader import load_party_agents
 from ..agents.prompts import (
     PARTY_HEAD_INTRO_PROMPT,
     ADVISOR_ANALYSIS_PROMPT,
@@ -26,6 +25,11 @@ _model_override: ContextVar[str | None] = ContextVar("_model_override", default=
 _temperature_override: ContextVar[float | None] = ContextVar(
     "_temperature_override", default=None
 )
+
+# Parties carried over for the two-party shape (back-compat with M1–M5 callers
+# and the existing test suite). Anything not in this set goes through the
+# generic dict-keyed state only.
+_LEGACY_PARTIES = ("republican", "democrat")
 
 
 def set_model_overrides(*, model: str | None = None, temperature: float | None = None) -> None:
@@ -74,10 +78,8 @@ def get_model() -> ChatAnthropic:
 
 
 def get_agents_by_party(party: str) -> list[Agent]:
-    """Get all agents for a party."""
-    if party == "republican":
-        return REPUBLICAN_AGENTS
-    return DEMOCRAT_AGENTS
+    """Get all agents for a party. Cached after first call."""
+    return load_party_agents(party)
 
 
 def get_party_head(party: str) -> Agent:
@@ -107,6 +109,40 @@ def format_discussion(messages: list[AgentMessage]) -> str:
     for msg in messages:
         formatted.append(f"**[{msg.agent_id}] {msg.agent_name} ({msg.role}):**\n{msg.content}\n")
     return "\n".join(formatted)
+
+
+def _participating_parties(state: NegotiationState) -> list[str]:
+    """Return the parties this debate is for, with a two-party default for
+    callers that haven't migrated to the dict-keyed state yet."""
+    parties = state.get("parties")
+    if parties:
+        return list(parties)
+    return ["democrat", "republican"]
+
+
+def _position_for(state: NegotiationState, party: str) -> str | None:
+    """Read a party's synthesized position. Prefers the new `positions` dict;
+    falls back to the legacy `republican_position` / `democrat_position`
+    fields when present."""
+    positions = state.get("positions") or {}
+    if party in positions:
+        return positions[party]
+    if party == "republican":
+        return state.get("republican_position")
+    if party == "democrat":
+        return state.get("democrat_position")
+    return None
+
+
+def _legacy_vote_writeback(votes_by_party: dict[str, list[Vote]]) -> dict[str, list[Vote]]:
+    """Mirror dict-keyed votes onto the legacy `republican_votes` /
+    `democrat_votes` keys when those parties are present. Keeps the CLI and
+    the M1–M5 test suite working without a wholesale rewrite."""
+    out: dict[str, list[Vote]] = {}
+    for legacy in _LEGACY_PARTIES:
+        if legacy in votes_by_party:
+            out[f"{legacy}_votes"] = list(votes_by_party[legacy])
+    return out
 
 
 # ============================================================================
@@ -288,158 +324,110 @@ async def form_party_position(state: PartyState, display_callback=None) -> dict[
 # ============================================================================
 
 async def cross_party_debate(state: NegotiationState, display_callback=None) -> dict[str, Any]:
-    """Conduct cross-party debate between party heads and advisors.
+    """Conduct cross-party debate across all participating parties.
 
-    On round 0 the heads use the opening prompt. On subsequent rounds they
-    rebut the accumulated transcript from prior rounds so the debate builds
-    on itself rather than restarting each round.
+    Each round, every party head delivers a turn (opening prompt on round 0,
+    rebuttal on subsequent rounds). Then up to two advisors per party rebut
+    in round-robin order. Earlier R2-A versions of this node hardcoded a
+    Republican-then-Democrat sequence; R2-C reads the participating parties
+    from the state so any 2+ caucuses can debate.
     """
     model = get_model()
 
-    rep_head = get_party_head("republican")
-    dem_head = get_party_head("democrat")
-
+    parties = _participating_parties(state)
     current_round = state["negotiation_round"]
     is_opening_round = current_round == 0
-    prior_transcript = format_discussion(state.get("debate_transcript", []))
 
-    debate_messages = []
+    debate_messages: list[AgentMessage] = []
 
-    # Republican head speaks
-    if is_opening_round:
-        rep_head_prompt = DEBATE_OPENING_PROMPT.format(
-            proposal_description=state["proposal"].description,
-            own_position=state["republican_position"] or "Not yet formed",
-            opposing_position=state["democrat_position"] or "Not yet formed",
-            round_number=current_round + 1,
-            max_rounds=state["max_rounds"],
-            agent_name=rep_head.name
-        )
-    else:
-        rep_head_prompt = DEBATE_REBUTTAL_PROMPT.format(
-            proposal_description=state["proposal"].description,
-            debate_transcript=prior_transcript,
-            agent_name=rep_head.name
-        )
+    # --- Head turns (one per party, in seating order) -----------------------
+    for party in parties:
+        head = get_party_head(party)
+        own_position = _position_for(state, party) or "Not yet formed"
 
-    rep_response = await model.ainvoke([
-        SystemMessage(content=rep_head.get_system_prompt(state["proposal"].description, state["republican_position"])),
-        HumanMessage(content=rep_head_prompt)
-    ])
+        if is_opening_round:
+            opposing_positions = []
+            for other in parties:
+                if other == party:
+                    continue
+                pos = _position_for(state, other) or "Not yet formed"
+                opposing_positions.append(f"{other.capitalize()}: {pos}")
+            opposing_summary = "\n".join(opposing_positions) if opposing_positions else "Not yet formed"
+            head_prompt = DEBATE_OPENING_PROMPT.format(
+                proposal_description=state["proposal"].description,
+                own_position=own_position,
+                opposing_position=opposing_summary,
+                round_number=current_round + 1,
+                max_rounds=state["max_rounds"],
+                agent_name=head.name,
+            )
+        else:
+            debate_so_far = format_discussion(
+                list(state.get("debate_transcript", [])) + debate_messages
+            )
+            head_prompt = DEBATE_REBUTTAL_PROMPT.format(
+                proposal_description=state["proposal"].description,
+                debate_transcript=debate_so_far,
+                agent_name=head.name,
+            )
 
-    rep_msg = AgentMessage(
-        agent_id=rep_head.id,
-        agent_name=rep_head.name,
-        party="republican",
-        role=rep_head.role,
-        content=_content_text(rep_response),
-        phase="cross_party_debate"
-    )
-    debate_messages.append(rep_msg)
-    if display_callback:
-        display_callback(rep_msg)
-
-    # Democrat head responds (always sees the just-spoken Republican turn,
-    # plus prior rounds if any)
-    dem_context = format_discussion(
-        list(state.get("debate_transcript", [])) + debate_messages
-    )
-    if is_opening_round:
-        dem_head_prompt = DEBATE_OPENING_PROMPT.format(
-            proposal_description=state["proposal"].description,
-            own_position=state["democrat_position"] or "Not yet formed",
-            opposing_position=state["republican_position"] or "Not yet formed",
-            round_number=current_round + 1,
-            max_rounds=state["max_rounds"],
-            agent_name=dem_head.name
-        )
-    else:
-        dem_head_prompt = DEBATE_REBUTTAL_PROMPT.format(
-            proposal_description=state["proposal"].description,
-            debate_transcript=dem_context,
-            agent_name=dem_head.name
-        )
-
-    dem_response = await model.ainvoke([
-        SystemMessage(content=dem_head.get_system_prompt(state["proposal"].description, state["democrat_position"])),
-        HumanMessage(content=dem_head_prompt)
-    ])
-
-    dem_msg = AgentMessage(
-        agent_id=dem_head.id,
-        agent_name=dem_head.name,
-        party="democrat",
-        role=dem_head.role,
-        content=_content_text(dem_response),
-        phase="cross_party_debate"
-    )
-    debate_messages.append(dem_msg)
-    if display_callback:
-        display_callback(dem_msg)
-
-    # Advisor rebuttals (one from each party)
-    rep_advisors = get_advisors("republican")
-    dem_advisors = get_advisors("democrat")
-
-    for rep_adv, dem_adv in zip(rep_advisors[:2], dem_advisors[:2]):  # Just first 2 advisors each
-        debate_so_far = format_discussion(
-            list(state.get("debate_transcript", [])) + debate_messages
-        )
-
-        # Republican advisor rebuttal
-        rep_rebuttal_prompt = DEBATE_REBUTTAL_PROMPT.format(
-            proposal_description=state["proposal"].description,
-            debate_transcript=debate_so_far,
-            agent_name=rep_adv.name
-        )
-
-        rep_adv_response = await model.ainvoke([
-            SystemMessage(content=rep_adv.get_system_prompt(state["proposal"].description, state["republican_position"])),
-            HumanMessage(content=rep_rebuttal_prompt)
+        response = await model.ainvoke([
+            SystemMessage(content=head.get_system_prompt(
+                state["proposal"].description, _position_for(state, party)
+            )),
+            HumanMessage(content=head_prompt),
         ])
-
-        rep_adv_msg = AgentMessage(
-            agent_id=rep_adv.id,
-            agent_name=rep_adv.name,
-            party="republican",
-            role=rep_adv.role,
-            content=_content_text(rep_adv_response),
-            phase="cross_party_debate"
+        msg = AgentMessage(
+            agent_id=head.id,
+            agent_name=head.name,
+            party=party,
+            role=head.role,
+            content=_content_text(response),
+            phase="cross_party_debate",
         )
-        debate_messages.append(rep_adv_msg)
+        debate_messages.append(msg)
         if display_callback:
-            display_callback(rep_adv_msg)
+            display_callback(msg)
 
-        # Democrat advisor rebuttal
-        debate_so_far = format_discussion(
-            list(state.get("debate_transcript", [])) + debate_messages
-        )
-        dem_rebuttal_prompt = DEBATE_REBUTTAL_PROMPT.format(
-            proposal_description=state["proposal"].description,
-            debate_transcript=debate_so_far,
-            agent_name=dem_adv.name
-        )
+    # --- Advisor rebuttals (up to 2 per party, interleaved across parties) --
+    advisor_pool = {p: get_advisors(p)[:2] for p in parties}
+    max_advisors = max((len(v) for v in advisor_pool.values()), default=0)
 
-        dem_adv_response = await model.ainvoke([
-            SystemMessage(content=dem_adv.get_system_prompt(state["proposal"].description, state["democrat_position"])),
-            HumanMessage(content=dem_rebuttal_prompt)
-        ])
-
-        dem_adv_msg = AgentMessage(
-            agent_id=dem_adv.id,
-            agent_name=dem_adv.name,
-            party="democrat",
-            role=dem_adv.role,
-            content=_content_text(dem_adv_response),
-            phase="cross_party_debate"
-        )
-        debate_messages.append(dem_adv_msg)
-        if display_callback:
-            display_callback(dem_adv_msg)
+    for index in range(max_advisors):
+        for party in parties:
+            advisors = advisor_pool[party]
+            if index >= len(advisors):
+                continue
+            advisor = advisors[index]
+            debate_so_far = format_discussion(
+                list(state.get("debate_transcript", [])) + debate_messages
+            )
+            rebuttal_prompt = DEBATE_REBUTTAL_PROMPT.format(
+                proposal_description=state["proposal"].description,
+                debate_transcript=debate_so_far,
+                agent_name=advisor.name,
+            )
+            response = await model.ainvoke([
+                SystemMessage(content=advisor.get_system_prompt(
+                    state["proposal"].description, _position_for(state, party)
+                )),
+                HumanMessage(content=rebuttal_prompt),
+            ])
+            msg = AgentMessage(
+                agent_id=advisor.id,
+                agent_name=advisor.name,
+                party=party,
+                role=advisor.role,
+                content=_content_text(response),
+                phase="cross_party_debate",
+            )
+            debate_messages.append(msg)
+            if display_callback:
+                display_callback(msg)
 
     return {
         "debate_transcript": debate_messages,
-        "negotiation_round": state["negotiation_round"] + 1
+        "negotiation_round": state["negotiation_round"] + 1,
     }
 
 
@@ -458,22 +446,15 @@ async def initial_voting(state: NegotiationState, display_callback=None) -> dict
     extra LLM pass adds ~30–60 s rather than minutes."""
     import asyncio
     model = get_model()
+    parties = _participating_parties(state)
 
-    republican_votes: list[Vote] = []
-    democrat_votes: list[Vote] = []
+    votes_by_party: dict[str, list[Vote]] = {}
 
-    parties: list[tuple[Literal["republican", "democrat"], list[Vote]]] = [
-        ("republican", republican_votes),
-        ("democrat", democrat_votes),
-    ]
-    for party, votes_list in parties:
+    for party in parties:
         agents = get_agents_by_party(party)
-        party_position = (
-            state["republican_position"] if party == "republican" else state["democrat_position"]
-        ) or ""
+        party_position = _position_for(state, party) or ""
 
-        async def cast_initial(agent: Agent, p: Literal["republican", "democrat"] = party,
-                               position: str = party_position) -> Vote:
+        async def cast_initial(agent: Agent, p: str = party, position: str = party_position) -> Vote:
             initial_prompt = (
                 f"PROPOSAL UNDER CONSIDERATION:\n{state['proposal'].description}\n\n"
                 f"YOUR PARTY'S SYNTHESIZED POSITION:\n{position}\n\n"
@@ -490,17 +471,16 @@ async def initial_voting(state: NegotiationState, display_callback=None) -> dict
             ])
             return parse_vote(_content_text(response), agent, p)
 
-        # Fan out the per-agent LLM calls within a party.
         cast_votes = await asyncio.gather(*(cast_initial(a) for a in agents))
-        votes_list.extend(cast_votes)
+        votes_by_party[party] = list(cast_votes)
         # Emit in stable order so the SSE feed mirrors the seating order.
         if display_callback:
             for vote in cast_votes:
                 display_callback(vote)
 
     return {
-        "republican_votes": republican_votes,
-        "democrat_votes": democrat_votes,
+        "votes_by_party": votes_by_party,
+        **_legacy_vote_writeback(votes_by_party),
         "phase": "cross_party_debate",
     }
 
@@ -508,23 +488,17 @@ async def initial_voting(state: NegotiationState, display_callback=None) -> dict
 async def conduct_voting(state: NegotiationState, display_callback=None) -> dict[str, Any]:
     """All agents cast their votes."""
     model = get_model()
+    parties = _participating_parties(state)
 
     # Prepare debate summary
     debate_summary = format_discussion(state.get("debate_transcript", []))
 
-    republican_votes: list[Vote] = []
-    democrat_votes: list[Vote] = []
+    votes_by_party: dict[str, list[Vote]] = {}
 
-    # Vote all agents
-    parties: list[tuple[Literal["republican", "democrat"], list[Vote]]] = [
-        ("republican", republican_votes),
-        ("democrat", democrat_votes),
-    ]
-    for party, votes_list in parties:
+    for party in parties:
         agents = get_agents_by_party(party)
-        party_position = (
-            state["republican_position"] if party == "republican" else state["democrat_position"]
-        ) or ""
+        party_position = _position_for(state, party) or ""
+        party_votes: list[Vote] = []
 
         for agent in agents:
             voting_prompt = agent.get_voting_prompt(
@@ -537,40 +511,37 @@ async def conduct_voting(state: NegotiationState, display_callback=None) -> dict
                 HumanMessage(content=voting_prompt)
             ])
 
-            # Parse the vote from response
             vote = parse_vote(_content_text(response), agent, party)
-            votes_list.append(vote)
+            party_votes.append(vote)
 
             if display_callback:
                 display_callback(vote)
 
+        votes_by_party[party] = party_votes
+
     # Aggregate unique amendments across all voters, preserving first-seen order.
     seen: set[str] = set()
     aggregated_amendments: list[str] = []
-    for vote in republican_votes + democrat_votes:
-        for amendment in vote.amendments:
-            normalized = amendment.strip()
-            if normalized and normalized not in seen:
-                seen.add(normalized)
-                aggregated_amendments.append(normalized)
+    for party in parties:
+        for vote in votes_by_party.get(party, []):
+            for amendment in vote.amendments:
+                normalized = amendment.strip()
+                if normalized and normalized not in seen:
+                    seen.add(normalized)
+                    aggregated_amendments.append(normalized)
 
     return {
-        "republican_votes": republican_votes,
-        "democrat_votes": democrat_votes,
+        "votes_by_party": votes_by_party,
+        **_legacy_vote_writeback(votes_by_party),
         "amendments_proposed": aggregated_amendments,
-        "phase": "resolution"
+        "phase": "resolution",
     }
 
 
-def parse_vote(
-    response: str,
-    agent: Agent,
-    party: Literal["republican", "democrat"],
-) -> Vote:
+def parse_vote(response: str, agent: Agent, party: str) -> Vote:
     """Parse vote from agent response."""
     content = response.upper()
 
-    # Determine vote
     vote_value: Literal["support", "oppose", "abstain"]
     if "VOTE: SUPPORT" in content or "VOTE:SUPPORT" in content:
         vote_value = "support"
@@ -579,7 +550,6 @@ def parse_vote(
     else:
         vote_value = "abstain"
 
-    # Extract reasoning
     reasoning = ""
     if "REASONING:" in response:
         parts = response.split("REASONING:", 1)
@@ -590,7 +560,6 @@ def parse_vote(
             else:
                 reasoning = reasoning_part.strip()
 
-    # Extract amendments
     amendments = []
     if "AMENDMENTS:" in response:
         parts = response.split("AMENDMENTS:", 1)
@@ -606,5 +575,5 @@ def parse_vote(
         party=party,
         vote=vote_value,
         reasoning=reasoning[:500] if reasoning else f"Voted {vote_value} based on party principles",
-        amendments=amendments
+        amendments=amendments,
     )

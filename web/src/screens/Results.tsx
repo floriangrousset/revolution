@@ -19,6 +19,7 @@ import type {
   VoteRecord,
   VoteValue,
 } from "../types";
+import ReactMarkdown from "react-markdown";
 import { ExportModal } from "./ExportModal";
 
 interface ResultsProps {
@@ -234,7 +235,15 @@ export function Results({ nav, param }: ResultsProps) {
           overflow: "hidden",
         }}
       >
-        <div style={{ position: "absolute", right: -30, top: -30, opacity: 0.05 }}>
+        <div
+          style={{
+            position: "absolute",
+            right: -30,
+            top: -30,
+            opacity: 0.05,
+            pointerEvents: "none",
+          }}
+        >
           <Seal size={220} />
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 24, alignItems: "flex-start" }}>
@@ -506,16 +515,44 @@ function describeArc(cx: number, cy: number, r: number, a1: number, a2: number):
   return `M ${p1.x} ${p1.y} A ${r} ${r} 0 0 1 ${p2.x} ${p2.y}`;
 }
 
-function buildChamber(personas: Persona[]): ChamberSeat[] {
+// Hand-tuned spans for the original D+R hemicycle. When the debate uses
+// only those two parties we re-use these exact values so the look matches
+// the M4–M5 chamber. For N>2 (or unknown party ids) we generate equal
+// wedges procedurally.
+const TWO_PARTY_LAYOUTS: Record<string, { head: number; span: [number, number] }> = {
+  democrat: { head: 109, span: [173, 118] },
+  republican: { head: 71, span: [62, 7] },
+};
+
+function buildChamber(personas: Persona[], partyIds: string[]): ChamberSeat[] {
   const seats: ChamberSeat[] = [];
   const cx = 500;
   const cy = 470;
-  (["democrat", "republican"] as const).forEach((party) => {
+
+  const useTwoPartyLayout =
+    partyIds.length === 2 && partyIds.every((p) => p in TWO_PARTY_LAYOUTS);
+
+  partyIds.forEach((party, partyIdx) => {
     const list = personas.filter((p) => p.party === party);
     const head = list.find((p) => p.role === "party_head");
     const rest = list.filter((p) => p.role !== "party_head").slice(0, 10);
     if (!head) return;
-    const headDeg = party === "democrat" ? 109 : 71;
+
+    let headDeg: number;
+    let span: [number, number];
+    if (useTwoPartyLayout) {
+      const layout = TWO_PARTY_LAYOUTS[party];
+      headDeg = layout.head;
+      span = layout.span;
+    } else {
+      // Equal-width wedges across the 180° hemicycle, leftmost party first.
+      const wedge = 180 / partyIds.length;
+      const inner = wedge * 0.78; // small visual gap between adjacent wedges
+      const center = 180 - (partyIdx + 0.5) * wedge;
+      headDeg = center;
+      span = [center + inner / 2, center - inner / 2];
+    }
+
     const ha = (headDeg * Math.PI) / 180;
     seats.push({
       agentId: head.id,
@@ -529,7 +566,6 @@ function buildChamber(personas: Persona[]): ChamberSeat[] {
       { n: 3, r: 340 },
       { n: 4, r: 430 },
     ];
-    const span = party === "democrat" ? [173, 118] : [62, 7];
     let idx = 0;
     rings.forEach((ring) => {
       for (let i = 0; i < ring.n; i++) {
@@ -658,8 +694,8 @@ function ChamberSeatNode({
     .slice(-2)
     .map((s) => s[0])
     .join("");
-  const base = persona.party === "democrat" ? T.dem : T.rep;
-  const bright = persona.party === "democrat" ? T.demBright : T.repBright;
+  const base = partyColor(persona.party);
+  const bright = partyBright(persona.party);
   const voteCol =
     vote === "support"
       ? T.support
@@ -799,7 +835,13 @@ function Overview({
   }, [speakerTurns]);
 
   // Chamber-specific derived state.
-  const seats = useMemo(() => buildChamber(personas), [personas]);
+  const partyIds = useMemo(
+    () => (debate.config.parties && debate.config.parties.length > 0
+      ? debate.config.parties
+      : ["democrat", "republican"]),
+    [debate.config.parties],
+  );
+  const seats = useMemo(() => buildChamber(personas, partyIds), [personas, partyIds]);
   const personaById = useMemo(
     () => Object.fromEntries(personas.map((p) => [p.id, p])),
     [personas],
@@ -1727,7 +1769,10 @@ function RecentTurn({ t }: { t: Turn }) {
     void api.getPersona(t.agent).then(setP).catch(() => null);
   }, [t.agent]);
   if (!p) return null;
-  const snippet = t.content.length > 220 ? t.content.slice(0, 220).trim() + "…" : t.content;
+  // Strip simple markdown syntax so the preview reads cleanly when the agent's
+  // content is full markdown. The full Transcript tab still renders it richly.
+  const plain = stripMarkdownLite(t.content);
+  const snippet = plain.length > 220 ? plain.slice(0, 220).trim() + "…" : plain;
   return (
     <div style={{ display: "flex", gap: 12 }}>
       <Avatar p={p} size={36} />
@@ -1768,6 +1813,26 @@ function RecentTurn({ t }: { t: Turn }) {
       </div>
     </div>
   );
+}
+
+/** Strip the small subset of markdown syntax that turns up in agent turns so
+ * a short snippet reads naturally. Not a full parser — the Transcript tab
+ * uses react-markdown for the rich rendering. */
+function stripMarkdownLite(s: string): string {
+  return s
+    .replace(/```[\s\S]*?```/g, " ")          // fenced code blocks
+    .replace(/`([^`]+)`/g, "$1")              // inline code
+    .replace(/^#{1,6}\s+/gm, "")              // ATX headers
+    .replace(/^\s*[-*+]\s+/gm, "")            // bullet markers
+    .replace(/^\s*\d+\.\s+/gm, "")            // ordered list markers
+    .replace(/^\s*>\s?/gm, "")                // blockquotes
+    .replace(/^---+\s*$/gm, "")               // horizontal rules
+    .replace(/\*\*([^*]+)\*\*/g, "$1")        // bold
+    .replace(/\*([^*]+)\*/g, "$1")            // italic
+    .replace(/_([^_]+)_/g, "$1")              // italic (underscore)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")  // links → label
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function fmtDuration(seconds: number): string {
@@ -2016,7 +2081,12 @@ function FullTranscript({ turns }: { turns: Turn[] }) {
       />
     );
   }
-  const phases = Array.from(new Set(turns.map((t) => t.phase)));
+  // System "phase banner" turns (agent=system) have no persona, so TurnRow
+  // skips them. Drop those phases here too — otherwise the transcript shows
+  // an empty "REPUBLICAN_DELIBERATION" header between Proposal and Opening
+  // Remarks. Speaker turns are what actually structures the transcript.
+  const speakerTurns = turns.filter((t) => t.agent !== "system");
+  const phases = Array.from(new Set(speakerTurns.map((t) => t.phase)));
   return (
     <div style={{ display: "grid", gap: 26 }}>
       {phases.map((ph) => (
@@ -2025,7 +2095,7 @@ function FullTranscript({ turns }: { turns: Turn[] }) {
             <span className="eyebrow">{PHASE_LABEL[ph] || ph}</span>
           </div>
           <div style={{ display: "grid", gap: 14 }}>
-            {turns
+            {speakerTurns
               .filter((t) => t.phase === ph)
               .map((t) => (
                 <TurnRow key={t.id} t={t} />
@@ -2067,10 +2137,134 @@ function TurnRow({ t }: { t: Turn }) {
             {t.round ? ` · Round ${t.round}` : ""}
           </span>
         </div>
-        <p style={{ fontSize: 14, color: "var(--txt-mute)", lineHeight: 1.65, margin: 0 }}>
-          {t.content}
-        </p>
+        <TurnMarkdown content={t.content} />
       </div>
+    </div>
+  );
+}
+
+/** Renders an agent turn's markdown content with chamber styling.
+ *
+ * react-markdown is safe-by-default — it converts markdown to React elements
+ * and never parses raw HTML, so an agent who writes `<script>` just sees the
+ * tag rendered as text. We map each markdown element to a styled component so
+ * headers, bold text, lists, and rules visually match the rest of the UI. */
+function TurnMarkdown({ content }: { content: string }) {
+  return (
+    <div
+      style={{
+        fontSize: 14,
+        color: "var(--txt-mute)",
+        lineHeight: 1.65,
+      }}
+    >
+      <ReactMarkdown
+        components={{
+          h1: ({ children }) => (
+            <h3
+              className="serif"
+              style={{
+                fontSize: 17,
+                color: "var(--txt)",
+                fontWeight: 600,
+                margin: "10px 0 6px",
+              }}
+            >
+              {children}
+            </h3>
+          ),
+          h2: ({ children }) => (
+            <h4
+              className="serif"
+              style={{
+                fontSize: 15,
+                color: "var(--txt)",
+                fontWeight: 600,
+                margin: "10px 0 4px",
+              }}
+            >
+              {children}
+            </h4>
+          ),
+          h3: ({ children }) => (
+            <h5
+              style={{
+                fontSize: 13,
+                color: "var(--gold-bright)",
+                fontWeight: 600,
+                letterSpacing: ".04em",
+                textTransform: "uppercase",
+                margin: "10px 0 4px",
+              }}
+            >
+              {children}
+            </h5>
+          ),
+          p: ({ children }) => (
+            <p style={{ margin: "0 0 8px" }}>{children}</p>
+          ),
+          strong: ({ children }) => (
+            <strong style={{ color: "var(--txt)", fontWeight: 600 }}>{children}</strong>
+          ),
+          em: ({ children }) => (
+            <em style={{ color: "var(--txt-faint)" }}>{children}</em>
+          ),
+          ul: ({ children }) => (
+            <ul style={{ margin: "4px 0 8px", paddingLeft: 20 }}>{children}</ul>
+          ),
+          ol: ({ children }) => (
+            <ol style={{ margin: "4px 0 8px", paddingLeft: 20 }}>{children}</ol>
+          ),
+          li: ({ children }) => <li style={{ marginBottom: 3 }}>{children}</li>,
+          hr: () => (
+            <hr
+              style={{
+                border: "none",
+                borderTop: "1px solid var(--ink-line)",
+                margin: "12px 0",
+              }}
+            />
+          ),
+          blockquote: ({ children }) => (
+            <blockquote
+              style={{
+                borderLeft: "3px solid var(--gold-deep)",
+                margin: "8px 0",
+                padding: "2px 0 2px 12px",
+                color: "var(--txt-faint)",
+                fontStyle: "italic",
+              }}
+            >
+              {children}
+            </blockquote>
+          ),
+          code: ({ children }) => (
+            <code
+              className="mono"
+              style={{
+                fontSize: 12.5,
+                background: "var(--ink2)",
+                padding: "1px 5px",
+                borderRadius: 4,
+              }}
+            >
+              {children}
+            </code>
+          ),
+          a: ({ href, children }) => (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--gold-bright)", textDecoration: "underline" }}
+            >
+              {children}
+            </a>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 }
