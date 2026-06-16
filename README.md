@@ -2,11 +2,14 @@
 
 > *Where AI agents debate politics so you don't have to!* 🎭
 
-A multi-agent political negotiation system where **22 AI agents** (11 Republican 🔴, 11 Democrat 🔵) debate and vote on user-submitted proposals.
+A multi-agent political negotiation system where **22 AI agents** (11 Republican 🔴, 11 Democrat 🔵) debate and vote on user-submitted proposals — available as both a **CLI** and a **full web app** (FastAPI backend + React frontend with a live legislative-chamber visualization).
 
 [![Made with Claude](https://img.shields.io/badge/Made%20with-Claude%20Code-blueviolet)](https://claude.com/claude-code)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/)
 [![LangGraph](https://img.shields.io/badge/Powered%20by-LangGraph-orange)](https://github.com/langchain-ai/langgraph)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/Frontend-React%2018-61DAFB.svg)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Bundler-Vite-646CFF.svg)](https://vitejs.dev/)
 
 ---
 
@@ -49,6 +52,8 @@ Revolution is an **agentic experiment** that simulates political negotiations us
 | 🔄 **Multi-Round Debates** | Configurable negotiation rounds with amendment proposals |
 | 🤝 **Persuasion Mechanic** | Agents can actually change their votes during debate! |
 | 🎨 **Beautiful CLI** | Party-colored panels with Rich library |
+| 🌐 **Live Web App** | FastAPI backend + React/Vite frontend; live legislative-chamber view with SSE streaming, per-debate dashboards, and PDF/Markdown/JSON export |
+| 🏛️ **Multi-Party Aware** | Persona Manager, Party Manager, and visualization screens support custom caucuses (Libertarian, Green, …) alongside the seeded Democrats and Republicans |
 
 ## 📺 Example Output
 
@@ -116,7 +121,7 @@ cp .env.example .env
 # Edit .env and add your ANTHROPIC_API_KEY
 ```
 
-### Usage
+### Usage — CLI
 
 ```bash
 python -m src.main
@@ -128,41 +133,85 @@ You'll be prompted to:
 
 Then sit back and watch the political fireworks! 🎆
 
+### Usage — Web app 🌐
+
+The web app wraps the same LangGraph engine in a FastAPI backend with a React/Vite frontend. It adds a Persona Manager, Party Manager, Launch screen, live legislative-chamber view with SSE streaming, and PDF/Markdown/JSON export.
+
+```bash
+# Terminal 1 — backend (FastAPI on :8000)
+python -m uvicorn server.main:app --reload
+# or, after `pip install -e .`:
+revolution-server
+
+# Terminal 2 — frontend (Vite on :5173)
+cd web
+pnpm install        # first run only
+pnpm dev
+```
+
+Open **http://localhost:5173** and:
+
+- **The Floor** — dashboard with debate history and chamber composition
+- **Launch Debate** — compose a proposal, pick model & temperature, choose round count
+- **Live Arena** *(inside the debate's Results page Overview tab)* — the hemicycle lights up as agents take the floor, votes color seats in real time
+- **Results** — vote breakdown by caucus, persuasion timeline, full transcript, amendments, export
+- **Persona Manager / Party Manager / Relationship Graph** — browse, edit, and create personas and parties
+
+The CLI (`python -m src.main`) keeps working unchanged — both run against the same persona JSON files (auto-seeded into `data/personas/` on first web boot).
+
 ## ⚙️ Configuration
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key | Required |
-| `MODEL_NAME` | Claude model to use | `claude-sonnet-4-20250514` |
+| `ANTHROPIC_API_KEY` | Your Anthropic API key | **Required** |
+| `MODEL_NAME` | Claude model — **CLI fallback only**; the web UI sets this per-debate from the Launch screen | `claude-sonnet-4-6` |
 | `MAX_ROUNDS` | Default max negotiation rounds | `5` |
+| `DATA_DIR` | Where the web app stores its file DB | `./data` |
+| `CORS_ORIGINS` | Allowed origins for the API | `http://localhost:5173` |
 
 ## 📁 Project Structure
 
 ```
 Revolution/
-├── src/
-│   ├── main.py              # 🚀 Entry point
-│   ├── state/
-│   │   └── types.py         # 📋 State definitions
-│   ├── agents/
-│   │   ├── base.py          # 🤖 Agent class
-│   │   ├── prompts.py       # 💬 System prompts
-│   │   ├── republican.py    # 🔴 Republican personas
-│   │   └── democrat.py      # 🔵 Democrat personas
-│   ├── graphs/
-│   │   ├── main_graph.py    # 🎯 Main orchestration
-│   │   ├── party_graph.py   # 🏛️ Party deliberation
-│   │   └── nodes.py         # 🔗 Graph nodes
-│   ├── voting/
-│   │   └── consensus.py     # 🗳️ Voting logic
-│   └── cli/
-│       └── display.py       # 🎨 Rich console output
+├── src/                          # 🧠 Engine (CLI + library)
+│   ├── main.py                   # 🚀 CLI entry point
+│   ├── state/types.py            # 📋 State definitions
+│   ├── agents/                   # 🤖 Agent class + persona JSON
+│   │   ├── base.py prompts.py
+│   │   ├── republican.py democrat.py
+│   │   └── data/{republican,democrat}/*.json
+│   ├── graphs/                   # 🎯 LangGraph nodes + flow
+│   │   ├── main_graph.py party_graph.py nodes.py
+│   ├── voting/consensus.py       # 🗳️ Voting tally
+│   └── cli/display.py            # 🎨 Rich console output
+│
+├── server/                       # 🌐 FastAPI backend
+│   ├── main.py                   # App factory + uvicorn entry
+│   ├── settings.py               # Env config (pydantic-settings)
+│   ├── db.py                     # File-DB access (personas, parties, debates)
+│   ├── engine.py                 # Wraps run_negotiation → SSE events
+│   ├── events.py                 # SSE event types + broadcaster
+│   ├── exporters.py              # PDF / Markdown / JSON
+│   └── routers/                  # personas, parties, debates, stream
+│
+├── web/                          # ⚛️ React + Vite + TypeScript frontend
+│   ├── index.html package.json vite.config.ts
+│   └── src/
+│       ├── App.tsx main.tsx theme.ts api.ts types.ts
+│       ├── components/           # Icon, Avatar, Btn, Tags, …
+│       └── screens/              # Dashboard, Personas, Parties,
+│                                 # Launch, Results (Overview + tabs), Graph
+│
+├── data/                         # 🗂️ Runtime file DB (gitignored)
+│   ├── parties.json index.json
+│   ├── personas/<party>/*.json   # Seeded from src/agents/data/ on first boot
+│   └── debates/<id>/             # debate.json transcript.jsonl votes.json amendments.json
+│
 ├── examples/
-│   ├── sample_proposals.txt # 💡 Example proposals
-│   └── ubi_negotiation.md   # 📄 Example session output
-├── requirements.txt
-├── pyproject.toml
-└── .env.example
+│   ├── sample_proposals.txt      # 💡 Example proposals
+│   └── ubi_negotiation.md        # 📄 Example session output
+├── requirements.txt pyproject.toml .env.example
+└── tests/
 ```
 
 ## 🛠️ Tech Stack
@@ -170,9 +219,12 @@ Revolution/
 | Technology | Purpose |
 |------------|---------|
 | [🔗 LangGraph](https://github.com/langchain-ai/langgraph) | Multi-agent orchestration |
-| [🧠 Claude API](https://www.anthropic.com/) | LLM reasoning (Sonnet/Opus) |
-| [🎨 Rich](https://github.com/Textualize/rich) | Beautiful terminal output |
-| [✅ Pydantic](https://docs.pydantic.dev/) | Data validation |
+| [🧠 Claude API](https://www.anthropic.com/) | LLM reasoning (Sonnet/Opus/Haiku) |
+| [🎨 Rich](https://github.com/Textualize/rich) | Beautiful terminal output (CLI) |
+| [⚡ FastAPI](https://fastapi.tiangolo.com/) | Async HTTP + SSE backend |
+| [⚛️ React 18](https://react.dev/) + [Vite](https://vitejs.dev/) + TS | Frontend |
+| [📄 ReportLab](https://www.reportlab.com/) | PDF export |
+| [✅ Pydantic](https://docs.pydantic.dev/) + pydantic-settings | Data validation & config |
 
 ## 💡 Sample Proposals to Try
 
@@ -234,8 +286,8 @@ Contributions are welcome! Some ideas:
 - 🎭 Add more agent personas
 - 📜 Implement amendment negotiation logic
 - 📊 Add historical voting record tracking
-- 🌐 Create a web interface
-- 🗳️ Add more political parties (Libertarian 🟡, Green 🟢, etc.)
+- 🗳️ Extend the engine to actually run deliberations for custom caucuses (Libertarian 🟡, Green 🟢, …). The registry, UI, and persona storage already support them; only the LangGraph flow is hardcoded to Democrat + Republican today.
+- 🔊 Token-level streaming for the live arena (today the SSE stream emits one event per completed turn — see `src/graphs/nodes.py` for the `astream` hook)
 
 ## 📄 License
 
