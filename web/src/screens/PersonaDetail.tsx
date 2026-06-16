@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { api } from "../api";
 import { Avatar } from "../components/Avatar";
+import { Btn, IconBtn } from "../components/Btn";
 import { Card } from "../components/Card";
+import { Field, TextArea, TextInput, inputStyle } from "../components/Form";
 import { Icon } from "../components/Icon";
 import { PartyTag, PostureTag, RoleTag } from "../components/Tags";
 import { POSTURE_META } from "../meta";
 import { partyColor } from "../theme";
-import type { Persona } from "../types";
+import type { NegotiationPosture, Persona } from "../types";
 
 interface PersonaDetailProps {
   id: string;
@@ -16,14 +18,22 @@ interface PersonaDetailProps {
 
 export function PersonaDetail({ id, nav }: PersonaDetailProps) {
   const [p, setP] = useState<Persona | null>(null);
+  const [draft, setDraft] = useState<Persona | null>(null);
+  const [edit, setEdit] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setP(null);
+    setDraft(null);
+    setEdit(false);
     setError(null);
     void api
       .getPersona(id)
-      .then(setP)
+      .then((r) => {
+        setP(r);
+        setDraft(r);
+      })
       .catch((e) => setError(String(e.message || e)));
   }, [id]);
 
@@ -36,7 +46,7 @@ export function PersonaDetail({ id, nav }: PersonaDetailProps) {
       </div>
     );
   }
-  if (!p) {
+  if (!p || !draft) {
     return (
       <div style={{ maxWidth: 1080, margin: "0 auto", padding: "26px 40px 60px" }}>
         <div style={{ color: "var(--txt-faint)", fontSize: 14 }}>Loading persona…</div>
@@ -44,10 +54,28 @@ export function PersonaDetail({ id, nav }: PersonaDetailProps) {
     );
   }
 
-  const lookupAgents = (ids: string[]): Promise<Persona[]> =>
-    Promise.all(ids.map((aid) => api.getPersona(aid).catch(() => null))).then((rs) =>
-      rs.filter((x): x is Persona => x !== null),
-    );
+  const set = <K extends keyof Persona>(k: K, v: Persona[K]) => setDraft((d) => ({ ...(d as Persona), [k]: v }));
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await api.updatePersona(id, draft);
+      setP(updated);
+      setDraft(updated);
+      setEdit(false);
+    } catch (e) {
+      setError((e as Error).message || String(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const cancel = () => {
+    setDraft(p);
+    setEdit(false);
+    setError(null);
+  };
 
   return (
     <div style={{ maxWidth: 1080, margin: "0 auto", padding: "26px 40px 60px" }}>
@@ -85,71 +113,155 @@ export function PersonaDetail({ id, nav }: PersonaDetailProps) {
           marginBottom: 22,
           position: "relative",
           overflow: "hidden",
-          borderTop: `3px solid ${partyColor(p.party)}`,
+          borderTop: `3px solid ${partyColor(draft.party)}`,
         }}
       >
         <div style={{ display: "flex", gap: 22, alignItems: "flex-start" }}>
-          <Avatar p={p} size={78} />
+          <Avatar p={draft} size={78} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
-              <PartyTag party={p.party} />
-              <RoleTag role={p.role} />
-              <PostureTag posture={p.negotiation_posture} />
+              <PartyTag party={draft.party} />
+              <RoleTag role={draft.role} />
+              <PostureTag posture={draft.negotiation_posture} />
             </div>
-            <h1
-              className="serif"
-              style={{ fontSize: 30, fontWeight: 600, margin: "0 0 6px", whiteSpace: "nowrap" }}
-            >
-              {p.name}
-            </h1>
-            <div style={{ fontSize: 15, color: "var(--txt-mute)" }}>{p.title}</div>
+            {edit ? (
+              <TextInput
+                value={draft.name}
+                onChange={(e) => set("name", e.target.value)}
+                style={{
+                  fontSize: 24,
+                  fontFamily: "var(--serif)",
+                  fontWeight: 600,
+                  marginBottom: 8,
+                }}
+              />
+            ) : (
+              <h1
+                className="serif"
+                style={{ fontSize: 30, fontWeight: 600, margin: "0 0 6px", whiteSpace: "nowrap" }}
+              >
+                {draft.name}
+              </h1>
+            )}
+            {edit ? (
+              <TextInput
+                value={draft.title}
+                onChange={(e) => set("title", e.target.value)}
+              />
+            ) : (
+              <div style={{ fontSize: 15, color: "var(--txt-mute)" }}>{draft.title}</div>
+            )}
             <div
               className="mono"
               style={{ fontSize: 12, color: "var(--txt-faint)", marginTop: 10 }}
             >
-              {p.id}
-              {p.persona_last_updated ? ` · updated ${p.persona_last_updated}` : ""}
+              {draft.id}
+              {draft.persona_last_updated ? ` · updated ${draft.persona_last_updated}` : ""}
             </div>
           </div>
+          <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
+            {edit ? (
+              <>
+                <Btn kind="ghost" onClick={cancel}>
+                  Cancel
+                </Btn>
+                <Btn kind="primary" icon="check" onClick={save} disabled={saving}>
+                  {saving ? "Saving…" : "Save"}
+                </Btn>
+              </>
+            ) : (
+              <Btn kind="solid" icon="edit" onClick={() => setEdit(true)}>
+                Edit persona
+              </Btn>
+            )}
+          </div>
         </div>
+        {error && (
+          <div
+            style={{
+              marginTop: 14,
+              padding: "10px 14px",
+              borderRadius: "var(--r-md)",
+              background: "rgba(192,57,43,0.12)",
+              border: "1px solid var(--reject)",
+              color: "var(--reject)",
+              fontSize: 13,
+            }}
+          >
+            {error}
+          </div>
+        )}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 22 }}>
         <div style={{ display: "grid", gap: 22 }}>
           <Block title="Specialty" icon="spark">
-            <p style={pStyle}>{p.specialty}</p>
+            {edit ? (
+              <TextInput value={draft.specialty} onChange={(e) => set("specialty", e.target.value)} />
+            ) : (
+              <p style={pStyle}>{draft.specialty}</p>
+            )}
           </Block>
 
           <Block title="Governing Philosophy" icon="feather">
-            <p
-              style={{
-                ...pStyle,
-                fontFamily: "var(--serif)",
-                fontSize: 16,
-                lineHeight: 1.65,
-                fontStyle: "italic",
-                color: "var(--txt)",
-              }}
-            >
-              “{p.philosophy}”
-            </p>
+            {edit ? (
+              <TextArea
+                value={draft.philosophy}
+                onChange={(e) => set("philosophy", e.target.value)}
+                style={{ minHeight: 120 }}
+              />
+            ) : (
+              <p
+                style={{
+                  ...pStyle,
+                  fontFamily: "var(--serif)",
+                  fontSize: 16,
+                  lineHeight: 1.65,
+                  fontStyle: "italic",
+                  color: "var(--txt)",
+                }}
+              >
+                “{draft.philosophy}”
+              </p>
+            )}
           </Block>
 
           <Block title="Communication Style" icon="transcript">
-            <p style={pStyle}>{p.communication_style}</p>
+            {edit ? (
+              <TextArea
+                value={draft.communication_style}
+                onChange={(e) => set("communication_style", e.target.value)}
+              />
+            ) : (
+              <p style={pStyle}>{draft.communication_style}</p>
+            )}
           </Block>
 
           <Block title="Key Positions" icon="check">
-            <List items={p.key_positions} color="var(--support)" mark="check" />
+            <EditList
+              items={draft.key_positions}
+              edit={edit}
+              onChange={(v) => set("key_positions", v)}
+              color="var(--support)"
+              mark="check"
+            />
           </Block>
 
           <Block title="Red Lines" icon="x">
-            <List items={p.red_lines} color="var(--oppose)" mark="x" />
+            <EditList
+              items={draft.red_lines}
+              edit={edit}
+              onChange={(v) => set("red_lines", v)}
+              color="var(--oppose)"
+              mark="x"
+            />
           </Block>
 
           <Block title="Rhetorical Signatures" icon="feather">
-            <List
-              items={p.rhetorical_signatures}
+            <EditList
+              items={draft.rhetorical_signatures}
+              edit={edit}
+              onChange={(v) => set("rhetorical_signatures", v)}
               color="var(--gold-bright)"
               mark="dot"
             />
@@ -158,26 +270,47 @@ export function PersonaDetail({ id, nav }: PersonaDetailProps) {
 
         <div style={{ display: "grid", gap: 22, alignContent: "start" }}>
           <Block title="Negotiation Posture" icon="scale">
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <span style={{ fontSize: 22, color: "var(--gold-bright)" }}>
-                  {POSTURE_META[p.negotiation_posture].glyph}
-                </span>
-                <span className="serif" style={{ fontSize: 17, fontWeight: 600 }}>
-                  {POSTURE_META[p.negotiation_posture].label}
-                </span>
+            {edit ? (
+              <select
+                value={draft.negotiation_posture}
+                onChange={(e) => set("negotiation_posture", e.target.value as NegotiationPosture)}
+                style={inputStyle}
+              >
+                {(Object.keys(POSTURE_META) as NegotiationPosture[]).map((k) => (
+                  <option key={k} value={k}>
+                    {POSTURE_META[k].label}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                  <span style={{ fontSize: 22, color: "var(--gold-bright)" }}>
+                    {POSTURE_META[draft.negotiation_posture].glyph}
+                  </span>
+                  <span className="serif" style={{ fontSize: 17, fontWeight: 600 }}>
+                    {POSTURE_META[draft.negotiation_posture].label}
+                  </span>
+                </div>
+                <p style={{ ...pStyle, fontSize: 13 }}>
+                  {POSTURE_META[draft.negotiation_posture].desc}
+                </p>
               </div>
-              <p style={{ ...pStyle, fontSize: 13 }}>
-                {POSTURE_META[p.negotiation_posture].desc}
-              </p>
-            </div>
+            )}
           </Block>
 
           <Block title="Constituency" icon="flag">
-            <p style={pStyle}>{p.constituency || "Not specified."}</p>
+            {edit ? (
+              <TextArea
+                value={draft.constituency}
+                onChange={(e) => set("constituency", e.target.value)}
+              />
+            ) : (
+              <p style={pStyle}>{draft.constituency || "Not specified."}</p>
+            )}
           </Block>
 
-          <Relationships allies={p.allies} rivals={p.rivals} nav={nav} lookup={lookupAgents} />
+          <Relationships allies={draft.allies} rivals={draft.rivals} nav={nav} />
         </div>
       </div>
     </div>
@@ -213,18 +346,57 @@ function Block({ title, icon, children }: { title: string; icon: string; childre
   );
 }
 
-function List({ items, color, mark }: { items: string[]; color: string; mark: string }) {
-  if (!items?.length) {
-    return <span style={{ fontSize: 13, color: "var(--txt-faint)" }}>None recorded</span>;
+function EditList({
+  items,
+  edit,
+  onChange,
+  color,
+  mark,
+}: {
+  items: string[];
+  edit: boolean;
+  onChange: (v: string[]) => void;
+  color: string;
+  mark: string;
+}) {
+  if (!edit) {
+    if (!items?.length) {
+      return <span style={{ fontSize: 13, color: "var(--txt-faint)" }}>None recorded</span>;
+    }
+    return (
+      <div style={{ display: "grid", gap: 10 }}>
+        {items.map((it, i) => (
+          <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <Icon name={mark} size={14} stroke={2.2} style={{ color, marginTop: 3 }} />
+            <span style={{ fontSize: 13.5, color: "var(--txt-mute)", lineHeight: 1.55 }}>{it}</span>
+          </div>
+        ))}
+      </div>
+    );
   }
   return (
-    <div style={{ display: "grid", gap: 10 }}>
-      {items.map((it, i) => (
-        <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
-          <Icon name={mark} size={14} stroke={2.2} style={{ color, marginTop: 3 }} />
-          <span style={{ fontSize: 13.5, color: "var(--txt-mute)", lineHeight: 1.55 }}>{it}</span>
+    <div style={{ display: "grid", gap: 8 }}>
+      {(items || []).map((it, i) => (
+        <div key={i} style={{ display: "flex", gap: 8 }}>
+          <TextInput
+            value={it}
+            onChange={(e) => {
+              const n = [...items];
+              n[i] = e.target.value;
+              onChange(n);
+            }}
+          />
+          <IconBtn name="close" onClick={() => onChange(items.filter((_, j) => j !== i))} />
         </div>
       ))}
+      <Btn
+        kind="ghost"
+        size="sm"
+        icon="plus"
+        onClick={() => onChange([...(items || []), ""])}
+      >
+        Add item
+      </Btn>
     </div>
   );
 }
@@ -233,17 +405,19 @@ function Relationships({
   allies,
   rivals,
   nav,
-  lookup,
 }: {
   allies: string[];
   rivals: string[];
   nav: (route: string, param?: string) => void;
-  lookup: (ids: string[]) => Promise<Persona[]>;
 }) {
   const [a, setA] = useState<Persona[]>([]);
   const [r, setR] = useState<Persona[]>([]);
 
   useEffect(() => {
+    const lookup = (ids: string[]) =>
+      Promise.all(ids.map((aid) => api.getPersona(aid).catch(() => null))).then((rs) =>
+        rs.filter((x): x is Persona => x !== null),
+      );
     void lookup(allies).then(setA);
     void lookup(rivals).then(setR);
   }, [allies.join("|"), rivals.join("|")]);

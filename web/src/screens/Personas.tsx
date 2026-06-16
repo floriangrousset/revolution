@@ -10,6 +10,7 @@ import { ROLE_META } from "../meta";
 import { partyColor } from "../theme";
 import type { PersonaSummary, Role } from "../types";
 
+import { AddPersonaModal } from "./AddPersonaModal";
 import { PersonaDetail } from "./PersonaDetail";
 
 interface PersonasProps {
@@ -27,16 +28,19 @@ export function Personas({ nav, param }: PersonasProps) {
 function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
   const [all, setAll] = useState<PersonaSummary[]>([]);
   const [q, setQ] = useState("");
-  const [party, setParty] = useState<"all" | "democrat" | "republican">("all");
+  const [party, setParty] = useState<"all" | string>("all");
   const [role, setRole] = useState<"all" | Role>("all");
   const [error, setError] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
-  useEffect(() => {
+  const refresh = () => {
     void api
       .listPersonas()
       .then((r) => setAll(r.personas))
       .catch((e) => setError(String(e.message || e)));
-  }, []);
+  };
+
+  useEffect(refresh, []);
 
   const list = useMemo(() => {
     return all.filter((p) => {
@@ -52,6 +56,11 @@ function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
 
   const dems = list.filter((p) => p.party === "democrat");
   const reps = list.filter((p) => p.party === "republican");
+  const others = list.filter((p) => p.party !== "democrat" && p.party !== "republican");
+  const customByParty = others.reduce<Record<string, PersonaSummary[]>>((acc, p) => {
+    (acc[p.party] = acc[p.party] || []).push(p);
+    return acc;
+  }, {});
 
   const FilterChip = ({
     active,
@@ -91,6 +100,9 @@ function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
           <div style={{ display: "flex", gap: 10 }}>
             <Btn kind="ghost" icon="graph" onClick={() => nav("graph")}>
               Relationship graph
+            </Btn>
+            <Btn kind="primary" icon="plus" onClick={() => setAddOpen(true)}>
+              New persona
             </Btn>
           </div>
         }
@@ -159,6 +171,26 @@ function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
         <Caucus title="Democratic Caucus" party="democrat" people={dems} nav={nav} />
         <Caucus title="Republican Conference" party="republican" people={reps} nav={nav} />
       </div>
+
+      {Object.keys(customByParty).length > 0 && (
+        <div style={{ marginTop: 36, display: "grid", gap: 30 }}>
+          {Object.entries(customByParty).map(([partyId, people]) => (
+            <Caucus
+              key={partyId}
+              title={`${partyId[0].toUpperCase()}${partyId.slice(1)} Caucus`}
+              party={partyId}
+              people={people}
+              nav={nav}
+            />
+          ))}
+        </div>
+      )}
+
+      <AddPersonaModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onCreated={refresh}
+      />
     </div>
   );
 }
@@ -170,7 +202,7 @@ function Caucus({
   nav,
 }: {
   title: string;
-  party: "democrat" | "republican";
+  party: string;
   people: PersonaSummary[];
   nav: PersonasProps["nav"];
 }) {

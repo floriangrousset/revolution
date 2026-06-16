@@ -4,6 +4,7 @@ import { DisclaimerBar } from "./components/DisclaimerBar";
 import { Sidebar } from "./components/Sidebar";
 import { useHashRoute } from "./hooks";
 import { Dashboard } from "./screens/Dashboard";
+import { Graph } from "./screens/Graph";
 import { Personas } from "./screens/Personas";
 import { Placeholder } from "./screens/Placeholder";
 
@@ -59,15 +60,7 @@ export function App() {
       );
       break;
     case "graph":
-      Screen = (
-        <Placeholder
-          eyebrow="Intra-party dynamics"
-          title="Relationship Graph"
-          description="Allies tend to reinforce each other in deliberation; rivals create internal friction. Relationships are intra-party by design."
-          comingIn="Interactive graph ships in M2."
-          nav={nav}
-        />
-      );
+      Screen = <Graph nav={nav} />;
       break;
     default:
       Screen = <Dashboard nav={nav} />;
