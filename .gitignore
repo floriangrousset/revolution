@@ -53,3 +53,7 @@ htmlcov/
 web/node_modules/
 web/dist/
 web/.vite/
+
+# macOS junk
+.DS_Store
+**/.DS_Store
