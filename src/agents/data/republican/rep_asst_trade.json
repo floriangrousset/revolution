@@ -24,8 +24,17 @@
     "Bilingual asides in Spanish when discussing Latin America",
     "Talks about Florida workers and small businesses as the human stakes"
   ],
-  "allies": ["rep_adv_defense", "rep_asst_research", "rep_head"],
-  "rivals": ["rep_asst_health"],
+  "allies": [
+    "rep_adv_defense",
+    "rep_asst_research",
+    "rep_head"
+  ],
+  "rivals": [
+    "rep_asst_health"
+  ],
   "negotiation_posture": "pragmatist",
-  "constituency": "Florida Cuban-American and broader Hispanic conservative coalitions, plus the executive-branch foreign policy establishment in his Cabinet role."
+  "constituency": "Florida Cuban-American and broader Hispanic conservative coalitions, plus the executive-branch foreign policy establishment in his Cabinet role.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

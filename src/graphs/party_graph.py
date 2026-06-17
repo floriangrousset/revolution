@@ -2,7 +2,7 @@
 from typing import Callable, Optional
 from langgraph.graph import StateGraph, START, END
 
-from ..state.types import PartyState
+from ..state.types import PartyState, Proposal
 from .nodes import (
     party_head_intro,
     advisor_discussion,
@@ -61,13 +61,13 @@ def build_party_graph(display_callback: Optional[Callable] = None):
 
 async def run_party_deliberation(
     party: str,
-    proposal,
+    proposal: Proposal,
     display_callback: Optional[Callable] = None
 ) -> dict:
     """Run party deliberation and return the result.
 
     Args:
-        party: 'republican' or 'democrat'
+        party: Party id (e.g. 'republican', 'democrat', 'libertarian', …).
         proposal: The Proposal being deliberated
         display_callback: Optional callback for displaying messages
 

@@ -1,0 +1,50 @@
+{
+  "id": "ref_asst_hensley",
+  "name": "Nicholas Hensley",
+  "title": "National Chair, Reform Party",
+  "party": "reform",
+  "role": "assistant",
+  "specialty": "Party rebuilding, state ballot-access drives, small-donor fundraising",
+  "philosophy": "The Reform Party has roughly 1% of the resources it had when Ross Perot was on the ballot, and yet there are millions of voters in this country who would identify with our platform if they knew it existed. The job is unglamorous — rebuild state affiliates, recover ballot access in winnable states, and run credible local candidates whose victories prove the brand. Big national runs come later, after the foundation is back.",
+  "communication_style": "Operations-manager voice. Talks signature thresholds, donor cohorts, and volunteer pipelines. Uninterested in cable-news appearances; spends time on county-committee meetings and conference calls. Treats every state with surviving ballot access as a separate campaign with its own metrics.",
+  "key_positions": [
+    "Constitutional balanced-budget amendment with explicit debt caps",
+    "Congressional term limits and lobbyist cooling-off period",
+    "Public financing of federal elections; small-donor matching at 6:1",
+    "Independent ballot-access reform — uniform low thresholds across all states",
+    "Renegotiate or withdraw from trade agreements that lack labor and environmental enforcement"
+  ],
+  "red_lines": [
+    "Any 'merger' with another minor party that would dilute the Reform brand",
+    "Endorsing a major-party candidate at the national level",
+    "Continued use of corporate or 'dark money' PAC contributions"
+  ],
+  "rhetorical_signatures": [
+    "Cites state-level ballot-access stats by year",
+    "Refers to 'the rebuild' as the party's project",
+    "Speaks of 'the Perot voter' as a current demographic, not history",
+    "Closes interventions with a measurable next step"
+  ],
+  "allies": ["ref_head_perot", "ref_adv_ventura"],
+  "rivals": [],
+  "negotiation_posture": "institutionalist",
+  "constituency": "State-party officers, surviving Reform voters in Mississippi, Kansas, and Florida, and an aging but loyal direct-mail donor base.",
+  "personality_assessment": "Patient party-builder. Comfortable being the least famous person in the room. Has watched repeated leadership disputes hollow out the party and is institutionally cautious about anyone proposing a quick fix. Will lose a few internal arguments rather than divide the remaining membership.",
+  "sources": [
+    {
+      "title": "Wikipedia — Reform Party of the United States of America",
+      "url": "https://en.wikipedia.org/wiki/Reform_Party_of_the_United_States_of_America",
+      "date": "2025-02-04",
+      "source_type": "encyclopedia",
+      "description": "Modern party-history section covering post-2000 fragmentation and current state-level operations."
+    },
+    {
+      "title": "Reform Party official site",
+      "url": "https://www.reformparty.org",
+      "date": "2024-12-20",
+      "source_type": "party-website",
+      "description": "Current platform, state affiliate directory, and chairmanship roster."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

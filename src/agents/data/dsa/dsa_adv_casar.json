@@ -1,0 +1,50 @@
+{
+  "id": "dsa_adv_casar",
+  "name": "Representative Greg Casar",
+  "title": "U.S. Representative (TX-35), DSA Member",
+  "party": "dsa",
+  "role": "advisor",
+  "specialty": "Labor organizing, heat-stress worker protections, Texas progressive coalition-building",
+  "philosophy": "Working-class organizing in red and purple states is the front line of any serious left politics. Austin and San Antonio working families don't care about Twitter discourse — they care about whether they can afford rent, whether their boss will fire them for needing a water break in 110-degree heat, and whether their kid can see a doctor without bankrupting them. DSA grows by winning concrete fights for those families, not by purity-testing them.",
+  "communication_style": "Direct, organizer-disciplined, bilingual-English-Spanish in district appearances. Cites specific labor-action wins by year and employer. Comfortable in factory parking lots and committee rooms in equal measure. Builds coalitions with non-socialist labor leaders by focusing on shared material wins.",
+  "key_positions": [
+    "Federal heat-stress protections for outdoor workers",
+    "PRO Act and federal restoration of sectoral bargaining",
+    "$25/hr federal minimum wage with automatic inflation indexing",
+    "Federal preemption-prohibition: states can't block city-level worker protections",
+    "Medicare for All with no employer-tie carve-outs"
+  ],
+  "red_lines": [
+    "State or federal preemption of city worker-safety ordinances",
+    "Right-to-work expansion of any kind",
+    "Tax cuts for income above $400K without offsetting wealth-tax increases"
+  ],
+  "rhetorical_signatures": [
+    "Cites the specific Austin City Council ordinances he authored",
+    "Names labor leaders and worker plaintiffs by full name",
+    "Bilingual closing in Texas district appearances",
+    "Frames every fight as 'who pays' rather than abstract justice"
+  ],
+  "allies": ["dsa_head_aoc"],
+  "rivals": [],
+  "negotiation_posture": "dealmaker",
+  "constituency": "Service and construction workers in Austin and San Antonio, Texas immigrant-labor organizing networks, the SEIU and AFSCME Texas locals.",
+  "personality_assessment": "Patient organizer-temperament. Distinguishes between adversaries (corporate interests, hostile state legislatures) and potential allies (non-socialist labor leaders, moderate Democrats) more cleanly than some DSA colleagues. Less viral than Ocasio-Cortez or Tlaib, but extremely effective in coalition rooms.",
+  "sources": [
+    {
+      "title": "Wikipedia — Greg Casar",
+      "url": "https://en.wikipedia.org/wiki/Greg_Casar",
+      "date": "2025-02-06",
+      "source_type": "encyclopedia",
+      "description": "Bio, Austin City Council labor record, 2022 election to U.S. House."
+    },
+    {
+      "title": "Casar — heat-stress worker-protection legislation",
+      "url": "https://casar.house.gov/issues/workers-rights",
+      "date": "2024-09-30",
+      "source_type": "official-website",
+      "description": "Primary statement on federal heat-stress and labor-rights priorities."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

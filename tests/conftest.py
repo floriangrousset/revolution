@@ -1,7 +1,14 @@
 """Pytest fixtures for the test suite."""
-import pytest
+import os
 
-from src.agents.base import _AGENT_REGISTRY
+# Force the agent loader to use the bundled `src/agents/data/<party>/` set
+# regardless of what the developer has saved into `data/personas/` via the
+# Persona Manager. Has to land in env BEFORE any agent module imports.
+os.environ.setdefault("REVOLUTION_USE_BUNDLED_PERSONAS", "1")
+
+import pytest  # noqa: E402
+
+from src.agents.base import _AGENT_REGISTRY  # noqa: E402
 
 
 @pytest.fixture(autouse=True)

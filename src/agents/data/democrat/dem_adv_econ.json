@@ -27,8 +27,17 @@
     "Pulls out diagrams or charts of corporate ownership structures",
     "Oklahoma upbringing as the reference point for working-class authenticity"
   ],
-  "allies": ["dem_asst_labor", "dem_adv_climate"],
-  "rivals": ["dem_asst_research", "dem_head"],
+  "allies": [
+    "dem_asst_labor",
+    "dem_adv_climate"
+  ],
+  "rivals": [
+    "dem_asst_research",
+    "dem_head"
+  ],
   "negotiation_posture": "hardliner",
-  "constituency": "Massachusetts progressives and the national progressive donor and activist base focused on financial accountability and consumer protection."
+  "constituency": "Massachusetts progressives and the national progressive donor and activist base focused on financial accountability and consumer protection.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

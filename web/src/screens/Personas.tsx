@@ -1,0 +1,359 @@
+import { useEffect, useMemo, useState } from "react";
+import { api } from "../api";
+import { Avatar } from "../components/Avatar";
+import { Btn } from "../components/Btn";
+import { Card, SectionTitle } from "../components/Card";
+import { inputStyle } from "../components/Form";
+import { Icon } from "../components/Icon";
+import { PostureTag, RoleTag } from "../components/Tags";
+import { ROLE_META } from "../meta";
+import { partyColor } from "../theme";
+import type { PartyEntry, PersonaSummary, Role } from "../types";
+
+import { AddPersonaModal } from "./AddPersonaModal";
+import { PersonaDetail } from "./PersonaDetail";
+
+interface PersonasProps {
+  nav: (route: string, param?: string) => void;
+  param?: string;
+}
+
+export function Personas({ nav, param }: PersonasProps) {
+  if (param) {
+    return <PersonaDetail id={param} nav={nav} />;
+  }
+  return <PersonaManager nav={nav} />;
+}
+
+function PersonaManager({ nav }: { nav: PersonasProps["nav"] }) {
+  const [all, setAll] = useState<PersonaSummary[]>([]);
+  const [parties, setParties] = useState<PartyEntry[]>([]);
+  const [q, setQ] = useState("");
+  const [party, setParty] = useState<"all" | string>("all");
+  const [role, setRole] = useState<"all" | Role>("all");
+  const [error, setError] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+
+  const refresh = () => {
+    void api
+      .listPersonas()
+      .then((r) => setAll(r.personas))
+      .catch((e) => setError(String(e.message || e)));
+    void api.listParties().then((r) => setParties(r.parties));
+  };
+
+  useEffect(refresh, []);
+
+  const list = useMemo(() => {
+    return all.filter((p) => {
+      if (party !== "all" && p.party !== party) return false;
+      if (role !== "all" && p.role !== role) return false;
+      if (q) {
+        const haystack = (p.name + p.title + p.specialty).toLowerCase();
+        if (!haystack.includes(q.toLowerCase())) return false;
+      }
+      return true;
+    });
+  }, [all, party, role, q]);
+
+  // Group the visible list into one bucket per party, preserving the
+  // registry's ordering so the two seeded caucuses always lead.
+  const grouped = useMemo(() => {
+    const map = new Map<string, PersonaSummary[]>();
+    parties.forEach((p) => map.set(p.id, []));
+    list.forEach((p) => {
+      if (!map.has(p.party)) map.set(p.party, []);
+      map.get(p.party)!.push(p);
+    });
+    return Array.from(map.entries());
+  }, [parties, list]);
+  const customPartyIds = parties.filter((p) => p.id !== "democrat" && p.id !== "republican");
+
+  const FilterChip = ({
+    active,
+    onClick,
+    children,
+    color,
+  }: {
+    active: boolean;
+    onClick: () => void;
+    children: React.ReactNode;
+    color?: string;
+  }) => (
+    <button
+      onClick={onClick}
+      style={{
+        padding: "7px 14px",
+        borderRadius: 999,
+        fontSize: 12.5,
+        fontWeight: 600,
+        background: active ? "var(--ink3)" : "transparent",
+        color: active ? color || "var(--gold-bright)" : "var(--txt-mute)",
+        border: `1px solid ${active ? color || "var(--gold-deep)" : "var(--ink-line)"}`,
+        transition: "all .15s ease",
+      }}
+    >
+      {children}
+    </button>
+  );
+
+  return (
+    <div style={{ maxWidth: 1180, margin: "0 auto", padding: "34px 40px 60px" }}>
+      <SectionTitle
+        eyebrow={`The Floor · ${all.length} Seated Agents`}
+        title="Persona Manager"
+        sub="Each agent carries a documented philosophy, red lines, rhetorical signatures, in-room allies and rivals, and a negotiation posture that governs how it behaves in debate."
+        right={
+          <div style={{ display: "flex", gap: 10 }}>
+            <Btn kind="ghost" icon="graph" onClick={() => nav("graph")}>
+              Relationship graph
+            </Btn>
+            <Btn kind="primary" icon="plus" onClick={() => setAddOpen(true)}>
+              New persona
+            </Btn>
+          </div>
+        }
+      />
+
+      {error && (
+        <Card pad={16} style={{ marginBottom: 18, borderLeft: "3px solid var(--reject)" }}>
+          <div style={{ color: "var(--reject)", fontSize: 13 }}>
+            Couldn't load personas: {error}
+          </div>
+        </Card>
+      )}
+
+      <div
+        style={{
+          display: "flex",
+          gap: 14,
+          alignItems: "center",
+          marginBottom: 26,
+          flexWrap: "wrap",
+        }}
+      >
+        <div style={{ position: "relative", flex: "1 1 280px", maxWidth: 360 }}>
+          <Icon
+            name="search"
+            size={16}
+            style={{ position: "absolute", left: 13, top: 12, color: "var(--txt-faint)" }}
+          />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by name, title, specialty…"
+            style={{ ...inputStyle, paddingLeft: 38 }}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <FilterChip active={party === "all"} onClick={() => setParty("all")}>
+            All
+          </FilterChip>
+          {parties.map((p) => (
+            <FilterChip
+              key={p.id}
+              active={party === p.id}
+              color={p.id === "democrat"
+                ? "var(--dem-bright)"
+                : p.id === "republican"
+                  ? "var(--rep-bright)"
+                  : p.color}
+              onClick={() => setParty(p.id)}
+            >
+              {p.label.replace(/Caucus|Conference/gi, "").trim() || p.id}
+            </FilterChip>
+          ))}
+        </div>
+        <div style={{ width: 1, height: 24, background: "var(--ink-line)" }} />
+        <div style={{ display: "flex", gap: 8 }}>
+          {(["all", "party_head", "advisor", "assistant"] as const).map((r) => (
+            <FilterChip key={r} active={role === r} onClick={() => setRole(r)}>
+              {r === "all" ? "All roles" : ROLE_META[r].label}
+            </FilterChip>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gap: 36 }}>
+        {grouped.map(([partyId, people]) => {
+          const meta = parties.find((p) => p.id === partyId);
+          const title =
+            meta?.label ||
+            (partyId === "democrat"
+              ? "Democratic Caucus"
+              : partyId === "republican"
+                ? "Republican Conference"
+                : `${partyId[0].toUpperCase()}${partyId.slice(1)} Caucus`);
+          return (
+            <Caucus
+              key={partyId}
+              title={title}
+              party={partyId}
+              people={people}
+              nav={nav}
+            />
+          );
+        })}
+      </div>
+
+      {customPartyIds.length > 0 && (
+        <div
+          style={{
+            marginTop: 24,
+            fontSize: 12,
+            color: "var(--txt-faint)",
+            textAlign: "center",
+            lineHeight: 1.5,
+          }}
+        >
+          {customPartyIds.length} custom caucus
+          {customPartyIds.length === 1 ? " is" : "es are"} registered. The engine
+          currently runs the deliberation flow for Democrats &amp; Republicans only;
+          custom caucuses appear in the registry and can hold personas, but their
+          members don't (yet) take the floor.
+        </div>
+      )}
+
+      <AddPersonaModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onCreated={refresh}
+      />
+    </div>
+  );
+}
+
+function Caucus({
+  title,
+  party,
+  people,
+  nav,
+}: {
+  title: string;
+  party: string;
+  people: PersonaSummary[];
+  nav: PersonasProps["nav"];
+}) {
+  const head = people.filter((p) => p.role === "party_head");
+  const adv = people.filter((p) => p.role === "advisor");
+  const asst = people.filter((p) => p.role === "assistant");
+  return (
+    <div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 16,
+          paddingBottom: 12,
+          borderBottom: `2px solid ${partyColor(party)}`,
+        }}
+      >
+        <span
+          style={{
+            width: 9,
+            height: 9,
+            borderRadius: "50%",
+            background: partyColor(party),
+            flexShrink: 0,
+          }}
+        />
+        <div className="serif" style={{ fontSize: 18, fontWeight: 600, whiteSpace: "nowrap" }}>
+          {title}
+        </div>
+        <span
+          className="mono"
+          style={{
+            fontSize: 12,
+            color: "var(--txt-faint)",
+            marginLeft: "auto",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {people.length} seated
+        </span>
+      </div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+          gap: 12,
+        }}
+      >
+        {[...head, ...adv, ...asst].map((p) => (
+          <PersonaCard key={p.id} p={p} nav={nav} />
+        ))}
+        {people.length === 0 && (
+          <div
+            style={{
+              color: "var(--txt-faint)",
+              fontSize: 13,
+              padding: 20,
+              textAlign: "center",
+              gridColumn: "1 / -1",
+            }}
+          >
+            No agents match.
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PersonaCard({ p, nav }: { p: PersonaSummary; nav: PersonasProps["nav"] }) {
+  return (
+    <Card
+      hover
+      pad={14}
+      onClick={() => nav("personas", p.id)}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        borderLeft: `3px solid ${partyColor(p.party)}`,
+        height: "100%",
+      }}
+    >
+      <div style={{ display: "flex", gap: 11, alignItems: "center", minWidth: 0 }}>
+        <Avatar p={p} size={40} />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div
+            className="serif"
+            style={{
+              fontSize: 14.5,
+              fontWeight: 600,
+              color: "var(--txt)",
+              lineHeight: 1.25,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+            title={p.name}
+          >
+            {p.name}
+          </div>
+          <div
+            style={{
+              fontSize: 11.5,
+              color: "var(--txt-mute)",
+              marginTop: 2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={p.title}
+          >
+            {p.title}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: "auto" }}>
+        <RoleTag role={p.role} />
+        <PostureTag posture={p.negotiation_posture} />
+      </div>
+    </Card>
+  );
+}

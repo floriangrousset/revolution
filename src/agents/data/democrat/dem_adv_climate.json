@@ -26,8 +26,19 @@
     "Direct camera-to-viewer Instagram-live cadence even on the floor",
     "Pointed five-minute hearing-room cross-examinations"
   ],
-  "allies": ["dem_asst_labor", "dem_asst_immigration", "dem_adv_econ"],
-  "rivals": ["dem_head", "dem_asst_budget", "dem_asst_research"],
+  "allies": [
+    "dem_asst_labor",
+    "dem_asst_immigration",
+    "dem_adv_econ"
+  ],
+  "rivals": [
+    "dem_head",
+    "dem_asst_budget",
+    "dem_asst_research"
+  ],
   "negotiation_posture": "bomb_thrower",
-  "constituency": "Bronx/Queens working-class voters of color (NY-14) and the national Justice Democrats / progressive movement that recruited her."
+  "constituency": "Bronx/Queens working-class voters of color (NY-14) and the national Justice Democrats / progressive movement that recruited her.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

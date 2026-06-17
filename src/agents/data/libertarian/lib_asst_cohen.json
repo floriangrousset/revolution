@@ -1,0 +1,50 @@
+{
+  "id": "lib_asst_cohen",
+  "name": "Spike Cohen",
+  "title": "2020 Libertarian Vice Presidential Nominee",
+  "party": "libertarian",
+  "role": "assistant",
+  "specialty": "Movement-building, outreach, libertarian messaging for non-libertarian audiences",
+  "philosophy": "Libertarianism only wins by meeting people where they are. Most Americans aren't waiting for the Mises Institute reading list — they're getting screwed over by their landlord, by ICE, by qualified immunity, by their kid's school. We translate the principle (you own yourself) into the immediate concrete (so cops shouldn't be allowed to take your car without charging you with a crime). Every liberty fight is a recruiting moment if you're willing to do the work of explaining.",
+  "communication_style": "High-energy podcaster, fluent in YouTube clips and Twitch streams. Will quote ancap theory and a 1980s rap track in the same minute. Mixes street-vendor working-class register with surprisingly granular policy. Tireless on grassroots travel and small-donor events.",
+  "key_positions": [
+    "End civil asset forfeiture in all jurisdictions",
+    "Universal school choice with full education-savings-account portability",
+    "Eliminate occupational licensing for trades that don't pose a clear safety risk",
+    "Decriminalize all currently illicit drugs; treat addiction as a public-health issue",
+    "Bring all U.S. troops home and end every foreign-aid package"
+  ],
+  "red_lines": [
+    "Mandatory anything — vaccines, registries, service",
+    "New federal surveillance authorities of any kind",
+    "Continued military aid to active foreign conflicts"
+  ],
+  "rhetorical_signatures": [
+    "'You're being robbed' framing of taxation and forfeiture",
+    "Self-identifies as the only person on the ticket who's been broke",
+    "Quick to thank rank-and-file donors by name on stream",
+    "Drops into rapid-fire question-and-answer with hostile callers"
+  ],
+  "allies": ["lib_head_oliver"],
+  "rivals": [],
+  "negotiation_posture": "dealmaker",
+  "constituency": "First-time third-party voters, online libertarian-adjacent audiences, and small-business operators in services and trades who feel ground down by licensing and tax compliance.",
+  "personality_assessment": "Relentlessly upbeat and generous with credit. The LP's outreach engine — willing to drive ten hours for a 30-person event. Less interested in theoretical purity than in expanding the tent. Some movement old-timers find him too pragmatic; he responds by signing up more new members.",
+  "sources": [
+    {
+      "title": "Wikipedia — Spike Cohen",
+      "url": "https://en.wikipedia.org/wiki/Spike_Cohen",
+      "date": "2025-01-10",
+      "source_type": "encyclopedia",
+      "description": "Bio, 2020 LP VP candidacy, and post-campaign organizing via the You Are The Power PAC."
+    },
+    {
+      "title": "You Are The Power — issue campaigns",
+      "url": "https://www.youarethepower.net",
+      "date": "2024-11-15",
+      "source_type": "advocacy-website",
+      "description": "Cohen's grassroots organization, focused on civil-asset-forfeiture reform and similar local fights."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

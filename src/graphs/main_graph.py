@@ -1,32 +1,41 @@
 """Main orchestration graph for the negotiation system."""
-import asyncio
 from typing import Callable, Optional, Literal
 from langgraph.graph import StateGraph, START, END
 
-from ..state.types import NegotiationState, Proposal, AgentMessage
+from ..state.types import NegotiationState, Proposal, AgentMessage, Vote
 from .party_graph import run_party_deliberation
-from .nodes import cross_party_debate, conduct_voting
+from .nodes import cross_party_debate, conduct_voting, initial_voting
 from ..voting.consensus import determine_final_result
 
+# Default participating parties for the CLI and any test caller that hasn't
+# migrated to passing `parties=...` explicitly.
+DEFAULT_PARTIES: list[str] = ["democrat", "republican"]
 
-def build_main_graph(display_callback: Optional[Callable] = None):
+
+def build_main_graph(
+    display_callback: Optional[Callable] = None,
+    parties: Optional[list[str]] = None,
+):
     """Build the main negotiation orchestration graph.
 
     Flow:
     1. Receive proposal
-    2. Republican deliberation (subgraph)
-    3. Democrat deliberation (subgraph)
-    4. Cross-party debate
-    5. Check if more rounds needed
-    6. Final voting
-    7. Announce result
+    2. One deliberation subgraph per participating party (in seating order)
+    3. Initial vote (drives the persuasion timeline)
+    4. Cross-party debate (loops while rounds remain)
+    5. Final voting
+    6. Resolution
 
     Args:
-        display_callback: Optional callback for displaying messages
+        display_callback: Optional callback for displaying messages.
+        parties: Optional explicit list of party ids participating in the
+            debate, in seating order (left → right). Defaults to
+            ["democrat", "republican"] for back-compat.
 
     Returns:
-        Compiled LangGraph for main negotiation
+        Compiled LangGraph for main negotiation.
     """
+    party_ids = list(parties) if parties else list(DEFAULT_PARTIES)
 
     async def receive_proposal(state: NegotiationState) -> dict:
         """Initialize the negotiation with the proposal."""
@@ -39,55 +48,58 @@ def build_main_graph(display_callback: Optional[Callable] = None):
                 content=f"Proposal received: {state['proposal'].description}",
                 phase="proposal_submission"
             ))
-        return {"phase": "republican_deliberation"}
+        # Surface the participating-parties list on the state so downstream
+        # nodes can read it without us threading it through every call.
+        return {"phase": "deliberation", "parties": party_ids}
 
-    async def republican_deliberation(state: NegotiationState) -> dict:
-        """Run Republican party deliberation."""
+    def make_deliberation_node(party_id: str):
+        """Build a deliberation node bound to a specific party."""
+
+        async def deliberation_node(state: NegotiationState) -> dict:
+            if display_callback:
+                display_callback(AgentMessage(
+                    agent_id="system",
+                    agent_name="System",
+                    party=party_id,
+                    role="system",
+                    content=f"Beginning {party_id.capitalize()} Party deliberation...",
+                    phase=f"{party_id}_deliberation",
+                ))
+
+            result = await run_party_deliberation(
+                party=party_id,
+                proposal=state["proposal"],
+                display_callback=display_callback,
+            )
+
+            # Write to both the dict-keyed `positions` field and the legacy
+            # per-party fields so back-compat consumers keep working.
+            position = result.get("party_position")
+            update: dict = {
+                "positions": {party_id: position},
+                "messages": result.get("discussion", []),
+            }
+            if party_id == "republican":
+                update["republican_position"] = position
+            elif party_id == "democrat":
+                update["democrat_position"] = position
+            return update
+
+        return deliberation_node
+
+    async def initial_voting_node(state: NegotiationState) -> dict:
+        """Tentative pre-debate vote — feeds the persuasion timeline."""
         if display_callback:
             display_callback(AgentMessage(
                 agent_id="system",
                 agent_name="System",
-                party="republican",
+                party="neutral",
                 role="system",
-                content="Beginning Republican Party deliberation...",
-                phase="republican_deliberation"
+                content="Calling tentative roll before cross-party debate...",
+                phase="initial_voting",
             ))
 
-        result = await run_party_deliberation(
-            party="republican",
-            proposal=state["proposal"],
-            display_callback=display_callback
-        )
-
-        return {
-            "republican_position": result.get("party_position"),
-            "messages": result.get("discussion", []),
-            "phase": "democrat_deliberation"
-        }
-
-    async def democrat_deliberation(state: NegotiationState) -> dict:
-        """Run Democrat party deliberation."""
-        if display_callback:
-            display_callback(AgentMessage(
-                agent_id="system",
-                agent_name="System",
-                party="democrat",
-                role="system",
-                content="Beginning Democrat Party deliberation...",
-                phase="democrat_deliberation"
-            ))
-
-        result = await run_party_deliberation(
-            party="democrat",
-            proposal=state["proposal"],
-            display_callback=display_callback
-        )
-
-        return {
-            "democrat_position": result.get("party_position"),
-            "messages": result.get("discussion", []),
-            "phase": "cross_party_debate"
-        }
+        return await initial_voting(state, display_callback)
 
     async def debate_node(state: NegotiationState) -> dict:
         """Conduct cross-party debate."""
@@ -98,7 +110,7 @@ def build_main_graph(display_callback: Optional[Callable] = None):
                 party="neutral",
                 role="system",
                 content=f"Beginning Cross-Party Debate (Round {state['negotiation_round'] + 1}/{state['max_rounds']})...",
-                phase="cross_party_debate"
+                phase="cross_party_debate",
             ))
 
         return await cross_party_debate(state, display_callback)
@@ -112,18 +124,21 @@ def build_main_graph(display_callback: Optional[Callable] = None):
                 party="neutral",
                 role="system",
                 content="Beginning Final Voting...",
-                phase="final_voting"
+                phase="final_voting",
             ))
 
         return await conduct_voting(state, display_callback)
 
     async def resolution_node(state: NegotiationState) -> dict:
         """Calculate and announce final result."""
-        result = determine_final_result(
-            state.get("republican_votes", []),
-            state.get("democrat_votes", [])
-        )
+        votes_by_party: dict[str, list[Vote]] = dict(state.get("votes_by_party") or {})
+        # Back-fill from the legacy per-party fields if the dict is sparse.
+        if not votes_by_party.get("republican") and state.get("republican_votes"):
+            votes_by_party["republican"] = list(state["republican_votes"])
+        if not votes_by_party.get("democrat") and state.get("democrat_votes"):
+            votes_by_party["democrat"] = list(state["democrat_votes"])
 
+        result = determine_final_result(votes_by_party)
         final_result = "passed" if result.passed else "rejected"
 
         if display_callback:
@@ -141,25 +156,11 @@ def build_main_graph(display_callback: Optional[Callable] = None):
             "phase": "resolution"
         }
 
-    def should_continue_debate(state: NegotiationState) -> Literal["debate", "vote"]:
-        """Determine if debate should continue or proceed to voting."""
-        current_round = state.get("negotiation_round", 0)
-        max_rounds = state.get("max_rounds", 5)
-
-        if current_round >= max_rounds:
-            return "vote"
-
-        # Could add more sophisticated logic here to detect consensus
-        return "debate"
-
     def after_debate_decision(state: NegotiationState) -> Literal["continue", "vote"]:
-        """After debate, decide whether to continue or vote."""
+        """After a debate round, continue if rounds remain, otherwise vote."""
         current_round = state.get("negotiation_round", 0)
-        max_rounds = state.get("max_rounds", 5)
-
-        # For simplicity, we do one debate round then vote
-        # In a more complex system, we could check for consensus
-        if current_round >= 1:  # After first debate round
+        max_rounds = state.get("max_rounds", 1)
+        if current_round >= max_rounds:
             return "vote"
         return "continue"
 
@@ -168,17 +169,24 @@ def build_main_graph(display_callback: Optional[Callable] = None):
 
     # Add nodes
     builder.add_node("receive_proposal", receive_proposal)
-    builder.add_node("republican_deliberation", republican_deliberation)
-    builder.add_node("democrat_deliberation", democrat_deliberation)
+    deliberation_node_names: list[str] = []
+    for party_id in party_ids:
+        node_name = f"{party_id}_deliberation"
+        builder.add_node(node_name, make_deliberation_node(party_id))
+        deliberation_node_names.append(node_name)
+    builder.add_node("initial_voting", initial_voting_node)
     builder.add_node("cross_party_debate", debate_node)
     builder.add_node("final_voting", voting_node)
     builder.add_node("resolution", resolution_node)
 
-    # Define flow
+    # Define flow: receive → deliberation1 → deliberation2 → … → initial_voting
     builder.add_edge(START, "receive_proposal")
-    builder.add_edge("receive_proposal", "republican_deliberation")
-    builder.add_edge("republican_deliberation", "democrat_deliberation")
-    builder.add_edge("democrat_deliberation", "cross_party_debate")
+    prev_node = "receive_proposal"
+    for node_name in deliberation_node_names:
+        builder.add_edge(prev_node, node_name)
+        prev_node = node_name
+    builder.add_edge(prev_node, "initial_voting")
+    builder.add_edge("initial_voting", "cross_party_debate")
 
     # After debate, either continue or vote
     builder.add_conditional_edges(
@@ -199,7 +207,10 @@ def build_main_graph(display_callback: Optional[Callable] = None):
 async def run_negotiation(
     proposal_text: str,
     max_rounds: int = 5,
-    display_callback: Optional[Callable] = None
+    display_callback: Optional[Callable] = None,
+    model: Optional[str] = None,
+    temperature: Optional[float] = None,
+    parties: Optional[list[str]] = None,
 ) -> NegotiationState:
     """Run a full negotiation on a proposal.
 
@@ -207,28 +218,39 @@ async def run_negotiation(
         proposal_text: The proposal text from the user
         max_rounds: Maximum negotiation rounds
         display_callback: Optional callback for displaying messages
+        model: Optional Claude model id to override the env default.
+        temperature: Optional temperature in [0, 1] to override the engine default.
+        parties: Optional explicit party-id list, in seating order. Defaults to
+            ["democrat", "republican"] for back-compat with the CLI and tests.
 
     Returns:
         Final NegotiationState with results
     """
-    graph = build_main_graph(display_callback)
+    from .nodes import set_model_overrides
+    set_model_overrides(model=model, temperature=temperature)
+
+    party_ids = list(parties) if parties else list(DEFAULT_PARTIES)
+    graph = build_main_graph(display_callback, parties=party_ids)
 
     proposal = Proposal.from_user_input(proposal_text)
 
-    initial_state = NegotiationState(
-        proposal=proposal,
-        messages=[],
-        debate_transcript=[],
-        republican_position=None,
-        democrat_position=None,
-        republican_votes=[],
-        democrat_votes=[],
-        negotiation_round=0,
-        max_rounds=max_rounds,
-        phase="proposal_submission",
-        final_result=None,
-        amendments_proposed=[]
-    )
+    initial_state: NegotiationState = {
+        "proposal": proposal,
+        "messages": [],
+        "debate_transcript": [],
+        "parties": party_ids,
+        "positions": {},
+        "votes_by_party": {},
+        "republican_position": None,
+        "democrat_position": None,
+        "republican_votes": [],
+        "democrat_votes": [],
+        "negotiation_round": 0,
+        "max_rounds": max_rounds,
+        "phase": "proposal_submission",
+        "final_result": None,
+        "amendments_proposed": [],
+    }
 
     result = await graph.ainvoke(initial_state)
     return result

@@ -4,6 +4,25 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal, Optional, get_args
 
+
+def _valid_roles() -> list[str]:
+    """Live list of allowed roles (settings.json reference_lists.roles,
+    falling back to the Literal type if the store hasn't been initialized yet)."""
+    try:
+        from src.config import get_reference_list
+        return get_reference_list("roles")
+    except Exception:
+        return list(get_args(Role))
+
+
+def _valid_postures() -> list[str]:
+    """Live list of allowed negotiation postures."""
+    try:
+        from src.config import get_reference_list
+        return get_reference_list("negotiation_postures")
+    except Exception:
+        return list(get_args(NegotiationPosture))
+
 NegotiationPosture = Literal[
     "dealmaker",
     "hardliner",
@@ -11,7 +30,12 @@ NegotiationPosture = Literal[
     "bomb_thrower",
     "institutionalist",
 ]
-Party = Literal["republican", "democrat"]
+
+# Party is a registry-driven enum, not a closed literal. The engine ships with
+# `republican` and `democrat` baked in, but the file-DB layer lets users register
+# new parties (e.g. libertarian, green) at runtime. We validate "non-empty
+# string" here; the parties registry is the canonical source of valid ids.
+Party = str
 Role = Literal["party_head", "advisor", "assistant"]
 
 _AGENT_REGISTRY: dict[str, "Agent"] = {}
@@ -46,6 +70,16 @@ def _resolve_id(agent_id: str) -> str:
 
 
 @dataclass
+class Source:
+    """A primary-source citation backing a persona's personality assessment."""
+    title: str
+    url: str
+    date: str
+    source_type: str
+    description: str = ""
+
+
+@dataclass
 class Agent:
     """A political agent with a defined persona."""
     id: str
@@ -63,17 +97,46 @@ class Agent:
     rivals: list[str] = field(default_factory=list)
     negotiation_posture: NegotiationPosture = "pragmatist"
     constituency: str = ""
+    personality_assessment: str = ""
+    sources: list[Source] = field(default_factory=list)
+    persona_last_updated: str = ""
 
     def __post_init__(self) -> None:
-        if self.party not in get_args(Party):
+        if not isinstance(self.party, str) or not self.party.strip():
             raise ValueError(f"Agent '{self.id}': invalid party {self.party!r}")
-        if self.role not in get_args(Role):
-            raise ValueError(f"Agent '{self.id}': invalid role {self.role!r}")
-        if self.negotiation_posture not in get_args(NegotiationPosture):
+        valid_roles = _valid_roles()
+        if self.role not in valid_roles:
+            raise ValueError(
+                f"Agent '{self.id}': invalid role {self.role!r}; "
+                f"expected one of {valid_roles}"
+            )
+        valid_postures = _valid_postures()
+        if self.negotiation_posture not in valid_postures:
             raise ValueError(
                 f"Agent '{self.id}': invalid negotiation_posture {self.negotiation_posture!r}; "
-                f"expected one of {list(get_args(NegotiationPosture))}"
+                f"expected one of {valid_postures}"
             )
+        if not isinstance(self.sources, list):
+            raise ValueError(
+                f"Agent '{self.id}': sources must be a list, got {type(self.sources).__name__}"
+            )
+        coerced: list[Source] = []
+        for index, s in enumerate(self.sources):
+            if isinstance(s, Source):
+                coerced.append(s)
+                continue
+            if not isinstance(s, dict):
+                raise ValueError(
+                    f"Agent '{self.id}': sources[{index}] must be a dict or Source, "
+                    f"got {type(s).__name__}"
+                )
+            try:
+                coerced.append(Source(**s))
+            except TypeError as e:
+                raise ValueError(
+                    f"Agent '{self.id}': sources[{index}] is invalid: {e}"
+                ) from e
+        self.sources = coerced
 
     @classmethod
     def from_json(cls, path: Path) -> "Agent":
@@ -103,6 +166,8 @@ class Agent:
         )
         relationships_text = self._format_relationships()
         constituency_text = self.constituency or "Not specified"
+        personality_text = self.personality_assessment or "Not yet researched."
+        sources_text = self._format_sources()
 
         return AGENT_SYSTEM_PROMPT.format(
             agent_name=self.name,
@@ -118,6 +183,8 @@ class Agent:
             key_positions=positions_text,
             red_lines=red_lines_text,
             relationships=relationships_text,
+            personality_assessment=personality_text,
+            sources=sources_text,
             proposal_description=proposal_description,
             party_position=party_position or "Not yet formed - you are helping to shape it"
         )
@@ -169,6 +236,19 @@ class Agent:
             ),
         }
         return descriptions[self.negotiation_posture]
+
+    def _format_sources(self) -> str:
+        """Format primary-source citations into a readable bullet list."""
+        if not self.sources:
+            return "None cited yet."
+        lines = []
+        for s in self.sources:
+            label = f"{s.title} ({s.source_type}, {s.date})"
+            if s.description:
+                lines.append(f"- {label}: {s.description} -- {s.url}")
+            else:
+                lines.append(f"- {label} -- {s.url}")
+        return "\n".join(lines)
 
     def _format_relationships(self) -> str:
         """Format allies and rivals into a readable block, resolving IDs to names."""

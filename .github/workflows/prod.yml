@@ -1,0 +1,49 @@
+name: prod
+
+# Runs on every merge into main. Re-runs the full check + build gates,
+# then deploys the freshly built artifact to the "prod" GitHub environment.
+# Deploy steps today are stubs — fill them in when the prod runtime exists.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: env-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/_checks.yml
+
+  build:
+    needs: checks
+    uses: ./.github/workflows/_build.yml
+
+  deploy:
+    name: deploy to prod
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: prod
+    env:
+      COMMIT_SHA: ${{ github.sha }}
+    steps:
+      - name: download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: deploy stub
+        run: |
+          echo "::notice title=prod deploy::main@${COMMIT_SHA} ready to deploy"
+          echo "Replace this stub with real deploy steps. Examples:"
+          echo "  - publish wheel to PyPI (use a Trusted Publisher)"
+          echo "  - build and push Docker image tagged :prod and :sha-${COMMIT_SHA}"
+          echo "  - kubectl apply / helm upgrade against the prod cluster"
+          echo "  - create a GitHub Release with the dist artifacts"
+          ls -la dist/

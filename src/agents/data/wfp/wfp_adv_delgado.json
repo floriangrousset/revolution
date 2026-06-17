@@ -1,0 +1,50 @@
+{
+  "id": "wfp_adv_delgado",
+  "name": "Antonio Delgado",
+  "title": "Lieutenant Governor of New York, WFP-Endorsed",
+  "party": "wfp",
+  "role": "advisor",
+  "specialty": "Rural-urban progressive coalition, upstate New York policy, criminal-justice reform",
+  "philosophy": "WFP's strategy lives or dies on whether we can knit together upstate rural voters with downstate urban coalitions. They share more interests than partisan tribalism admits: childcare costs, hospital closures, broadband access, opioid recovery, fair wages. The Democratic Party fails because it speaks past upstate America; the Republican Party wins because it speaks to it dishonestly. WFP can do better by being honest about the shared material agenda.",
+  "communication_style": "Lawyer-academic register, with a former Rhodes Scholar's habit of citing specific studies and case law. Calm even under attack. Equally comfortable in a Hudson Valley fire-station town hall and a Manhattan endorsement breakfast. Was a recording artist in another life and has an ear for cadence.",
+  "key_positions": [
+    "Universal childcare and paid family leave",
+    "Federal investment in rural broadband and rural-hospital preservation",
+    "Bail-reform protection at the federal level against carceral rollback",
+    "Sectoral bargaining for service-sector workers",
+    "Federal student-debt cancellation for public-service careers"
+  ],
+  "red_lines": [
+    "Bail-reform rollback in any form",
+    "Right-to-work expansion at state or federal level",
+    "Cuts to Medicaid expansion in rural-hospital catchment areas"
+  ],
+  "rhetorical_signatures": [
+    "Cites Hudson Valley constituent stories by name",
+    "References his time as a hip-hop artist when discussing youth-engagement policy",
+    "Pivots smoothly from law-school precedent to a town-hall anecdote",
+    "Closes by emphasizing what upstate and downstate share rather than what divides"
+  ],
+  "allies": ["wfp_head_mitchell"],
+  "rivals": [],
+  "negotiation_posture": "dealmaker",
+  "constituency": "Upstate New York progressive Democrats, the Hudson Valley professional class, Black voters in mid-Hudson cities, and the New York union coalition.",
+  "personality_assessment": "Polished, deliberate, and unusually patient about cross-coalition work. Less ideologically extreme than some WFP allies, but uses that as an asset in upstate persuasion. Aware that his profile gives him both opportunity and constraint as a national figure inside a New York-based party.",
+  "sources": [
+    {
+      "title": "Wikipedia — Antonio Delgado",
+      "url": "https://en.wikipedia.org/wiki/Antonio_Delgado_(politician)",
+      "date": "2025-02-09",
+      "source_type": "encyclopedia",
+      "description": "Bio, NY-19 congressional service 2019–2022, 2022 elevation to Lt. Governor."
+    },
+    {
+      "title": "New York Lt. Governor — official policy page",
+      "url": "https://www.governor.ny.gov/about/lieutenant-governor",
+      "date": "2024-12-12",
+      "source_type": "official-website",
+      "description": "Public-record policy positions held in current state office."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

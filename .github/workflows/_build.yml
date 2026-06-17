@@ -1,0 +1,32 @@
+name: build
+
+# Reusable workflow: builds the project's distributable artifacts (wheel + sdist)
+# and uploads them. Deploy jobs in test.yml and prod.yml download the same
+# artifact, so we build once per merge and deploy that exact bundle to each
+# environment ("build once, deploy many").
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    name: build wheel and sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: install build
+        run: pip install build
+      - name: build artifacts
+        run: python -m build
+      - name: upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error

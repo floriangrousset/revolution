@@ -1,0 +1,50 @@
+name: test
+
+# Runs on every merge into develop. Re-runs the full check + build gates,
+# then deploys the freshly built artifact to the "test" GitHub environment.
+# Deploy steps today are stubs — fill them in when the test runtime exists.
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  # Serialize deploys to test; never cancel an in-flight deploy.
+  group: env-test
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    uses: ./.github/workflows/_checks.yml
+
+  build:
+    needs: checks
+    uses: ./.github/workflows/_build.yml
+
+  deploy:
+    name: deploy to test
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: test
+    env:
+      COMMIT_SHA: ${{ github.sha }}
+    steps:
+      - name: download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: deploy stub
+        run: |
+          echo "::notice title=test deploy::develop@${COMMIT_SHA} ready to deploy"
+          echo "Replace this stub with real deploy steps. Examples:"
+          echo "  - publish wheel to a private package index"
+          echo "  - build and push a Docker image tagged :test"
+          echo "  - kubectl apply / helm upgrade against the test cluster"
+          echo "  - trigger a managed runtime (Cloud Run, Lambda, Vercel) deploy"
+          ls -la dist/

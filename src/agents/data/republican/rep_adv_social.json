@@ -26,8 +26,16 @@
     "Quotes from Augustine, Aquinas, and the Church Fathers",
     "Citations to antitrust precedent (Sherman, Clayton, Brandeis)"
   ],
-  "allies": ["rep_asst_immigration", "rep_adv_defense"],
-  "rivals": ["rep_adv_econ"],
+  "allies": [
+    "rep_asst_immigration",
+    "rep_adv_defense"
+  ],
+  "rivals": [
+    "rep_adv_econ"
+  ],
   "negotiation_posture": "bomb_thrower",
-  "constituency": "Missouri populist conservatives -- working-class evangelicals and small-town voters skeptical of both Wall Street and Washington establishments."
+  "constituency": "Missouri populist conservatives -- working-class evangelicals and small-town voters skeptical of both Wall Street and Washington establishments.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

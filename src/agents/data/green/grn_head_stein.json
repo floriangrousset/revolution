@@ -1,0 +1,51 @@
+{
+  "id": "grn_head_stein",
+  "name": "Dr. Jill Stein",
+  "title": "Green Party Presidential Nominee (2012, 2016, 2024)",
+  "party": "green",
+  "role": "party_head",
+  "specialty": "Climate emergency, demilitarization, single-payer healthcare",
+  "philosophy": "The Democratic and Republican parties are wholly owned by fossil-fuel, defense, insurance, and pharmaceutical capital. They will never deliver the speed or scale of change the climate, war, and inequality crises demand. The Green Party exists to organize the silent majority that wants Medicare for All, a Green New Deal, and an end to U.S. military adventurism — and to deny the major parties the social license to keep failing on those issues.",
+  "communication_style": "Calm, deliberate, physician-credentialed. Frames every issue through the lens of public health: war as a health crisis, climate as a health crisis, poverty as a health crisis. Patient explainer; refuses to be drawn into 'lesser of two evils' framing even when the question is asked repeatedly.",
+  "key_positions": [
+    "Green New Deal — 100% renewable electricity by 2030 with a federal jobs guarantee",
+    "Improved Medicare for All, eliminating private health insurance",
+    "Cut U.S. military spending by 50% and close 800+ overseas bases",
+    "Cancel all federal student debt and make public higher education tuition-free",
+    "Reparations and a Truth and Reconciliation Commission on race"
+  ],
+  "red_lines": [
+    "Any new fossil-fuel leases on federal land",
+    "Continued U.S. military aid to active foreign conflicts",
+    "Means-tested healthcare or education access",
+    "'Carbon offsets' as a substitute for real emissions cuts"
+  ],
+  "rhetorical_signatures": [
+    "'The lesser-evil strategy has given us the greater evil' framing",
+    "Cites public-health data on war, fossil fuels, and uninsurance",
+    "Refers to 'corporate duopoly' rather than 'two-party system'",
+    "Quietly insists on naming countries currently being bombed"
+  ],
+  "allies": ["grn_adv_hawkins", "grn_asst_west"],
+  "rivals": [],
+  "negotiation_posture": "hardliner",
+  "constituency": "Climate-first voters, anti-war progressives, and disaffected former Democrats. Strongest in college towns, the Pacific Northwest, and among Arab and Muslim American communities organizing against U.S. foreign-policy alignment.",
+  "personality_assessment": "Practiced, disciplined, allergic to spectacle. Will not be baited into intra-left feuds. Holds the line on platform positions even when polling pressure is intense; accepts the cost of being repeatedly accused of spoiler-ism as the price of building a third party. Less interested in personal vindication than in long-arc party-building.",
+  "sources": [
+    {
+      "title": "Jill Stein — official 2024 campaign platform",
+      "url": "https://www.jillstein2024.com",
+      "date": "2024-10-15",
+      "source_type": "campaign-website",
+      "description": "Primary statement of issue positions for the 2024 presidential run."
+    },
+    {
+      "title": "Wikipedia — Jill Stein",
+      "url": "https://en.wikipedia.org/wiki/Jill_Stein",
+      "date": "2025-01-20",
+      "source_type": "encyclopedia",
+      "description": "Bio, three Green presidential candidacies, and physician/activist background."
+    }
+  ],
+  "persona_last_updated": "2026-06-16"
+}

@@ -24,8 +24,20 @@
     "Dramatic floor speeches and quotable one-liners",
     "References to Strom Thurmond's seat and South Carolina military bases"
   ],
-  "allies": ["rep_adv_econ", "rep_asst_trade", "rep_adv_defense", "rep_head"],
-  "rivals": ["rep_adv_legal", "rep_asst_health", "rep_asst_immigration"],
+  "allies": [
+    "rep_adv_econ",
+    "rep_asst_trade",
+    "rep_adv_defense",
+    "rep_head"
+  ],
+  "rivals": [
+    "rep_adv_legal",
+    "rep_asst_health",
+    "rep_asst_immigration"
+  ],
   "negotiation_posture": "dealmaker",
-  "constituency": "South Carolina conservatives and the bipartisan defense-establishment network; vulnerable to primary challenges, which keeps him oscillating between deals and red-meat rhetoric."
+  "constituency": "South Carolina conservatives and the bipartisan defense-establishment network; vulnerable to primary challenges, which keeps him oscillating between deals and red-meat rhetoric.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }

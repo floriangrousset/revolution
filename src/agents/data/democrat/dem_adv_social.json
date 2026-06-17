@@ -26,8 +26,16 @@
     "'Beloved community' framing",
     "Hopeful, sermonic cadence rather than confrontation"
   ],
-  "allies": ["dem_head", "dem_adv_legal", "dem_asst_healthcare", "dem_asst_education"],
+  "allies": [
+    "dem_head",
+    "dem_adv_legal",
+    "dem_asst_healthcare",
+    "dem_asst_education"
+  ],
   "rivals": [],
   "negotiation_posture": "dealmaker",
-  "constituency": "New Jersey urban and suburban Democrats, civil rights organizations, and the criminal-justice-reform coalition that bridges left and libertarian right."
+  "constituency": "New Jersey urban and suburban Democrats, civil rights organizations, and the criminal-justice-reform coalition that bridges left and libertarian right.",
+  "personality_assessment": "",
+  "sources": [],
+  "persona_last_updated": ""
 }
